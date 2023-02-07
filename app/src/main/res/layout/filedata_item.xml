@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="10dp"
+        app:cardCornerRadius="4dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/file_bg_color"
+            android:padding="10dp">
+
+            <ImageView
+                android:id="@+id/fileImage_iv"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/text_image"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"></ImageView>
+
+            <TextView
+                android:id="@+id/fileName_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:layout_toRightOf="@+id/fileImage_iv"
+                android:text="File name"
+                android:textColor="@color/text_black"></TextView>
+
+            <TextView
+                android:id="@+id/fileDateTime_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/fileName_TV"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="5dp"
+                android:layout_toRightOf="@id/fileImage_iv"
+                android:text="Date Time"
+                android:textColor="@color/text_black"></TextView>
+
+            <TextView
+                android:id="@+id/fileComponent_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/fileDateTime_TV"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="5dp"
+                android:layout_toRightOf="@id/fileImage_iv"
+                android:text="Component : Flange"
+                android:textColor="@color/text_black"></TextView>
+
+
+
+            <TextView
+                android:id="@+id/fileFacility_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="5dp"
+                android:layout_below="@id/fileDateTime_TV"
+                android:layout_toRightOf="@id/fileComponent_TV"
+                android:text="Facility : New One"
+                android:textColor="@color/text_black"></TextView>
+
+            <TextView
+                android:id="@+id/fileSiteLocation_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/fileImage_iv"
+                android:layout_below="@id/fileComponent_TV"
+                android:layout_marginTop="5dp"
+                android:layout_marginStart="2dp"
+                android:text="Site / Location : Delhi"
+                android:textColor="@color/text_black"></TextView>
+            <TextView
+                android:id="@+id/fileDuration_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/fileFacility_TV"
+                android:layout_marginTop="5dp"
+                android:layout_marginStart="20dp"
+                android:layout_toRightOf="@id/fileSiteLocation_TV"
+                android:text="Duration : 22:99"
+                android:textColor="@color/text_black"></TextView>
+
+            <TextView
+                android:id="@+id/fileNotes_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/fileImage_iv"
+                android:text="Notes : Null"
+                android:textColor="@color/text_black"></TextView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/fileNotes_TV"
+                android:orientation="horizontal"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/fileMIN"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Min"
+                    android:textColor="@color/text_black"></TextView>
+
+                <TextView
+                    android:id="@+id/fileMax"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Max"
+                    android:textColor="@color/text_black"></TextView>
+
+                <TextView
+                    android:id="@+id/fileAverage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Average"
+                    android:textColor="@color/text_black"></TextView>
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/fileDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/ic_delete"></ImageView>
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+</RelativeLayout>
