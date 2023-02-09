@@ -39,9 +39,7 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:4.14.2'
 
-    //Camerax
-    def camerax_version = "1.2.0-beta02"
-    implementation "androidx.camera:camera-video:${camerax_version}"
+    implementation 'com.arthenica:mobile-ffmpeg-full:4.4'
 
 
 

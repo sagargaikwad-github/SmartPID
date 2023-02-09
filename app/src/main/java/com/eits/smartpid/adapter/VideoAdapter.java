@@ -42,18 +42,30 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.holder> {
     @Override
     public void onBindViewHolder(@NonNull holder holder, @SuppressLint("RecyclerView") int position) {
 
-        String filename = "File Name : "+"<b>" +arrayList.get(position).getFileName()+ "</b>";
-        holder.filename.setText(Html.fromHtml(filename));
 
-        holder.dateTime.setText(arrayList.get(position).getFileDateTime());
-        holder.component.setText(String.valueOf(arrayList.get(position).getCompID()));
-        holder.location.setText(arrayList.get(position).getFileSiteLocation());
-        holder.facility.setText(String.valueOf(arrayList.get(position).getFacID()));
-        holder.duration.setText(arrayList.get(position).getFileDuration());
-        holder.min.setText(String.valueOf(arrayList.get(position).getFileMin()));
-        holder.max.setText(String.valueOf(arrayList.get(position).getFileMax()));
-        holder.average.setText(String.valueOf(arrayList.get(position).getFileAverage()));
-        holder.notes.setText(arrayList.get(position).getFileNote());
+        String TestNote=" a coastal town in the Erongo Region of western Namibia. It is a holiday and retirement settlement, with angling a popular activity, and also serves as a gateway to the seal colony of Cape Cross, which lies 46 kilometres (29 miles) to the north of the town. The town is named after Major Hendrik \"Henty\" Stefanus van der Merwe";
+        String filename = "<b>"+arrayList.get(position).getFileName()+"</b>";
+        String datetime = "Date & Time : "+"<b>"+arrayList.get(position).getFileDateTime()+"</b>";
+        String component = "Component : "+"<b>"+"Flange"+"</b>";
+        String location = "Location : "+"<b>"+arrayList.get(position).getFileSiteLocation()+"</b>";
+        String facility = "Facility : "+"<b>"+"DNTL"+"</b>";
+        String duration = "Duration : "+"<b>"+arrayList.get(position).getFileDuration()+"</b>";
+        String notes = "Notes : "+"<br>"+"<b>"+"    "+TestNote+"</b>";
+        String min = "Min : "+"<b>"+arrayList.get(position).getFileMin()+"</b>";
+        String max = "Max : "+"<b>"+arrayList.get(position).getFileMax()+"</b>";
+        String average = "Average : "+"<b>"+arrayList.get(position).getFileAverage()+"</b>";
+
+        holder.filename.setText(Html.fromHtml(filename));
+        holder.dateTime.setText(Html.fromHtml(datetime));
+        holder.component.setText(Html.fromHtml(component));
+        holder.location.setText(Html.fromHtml(location));
+        holder.facility.setText(Html.fromHtml(facility));
+        holder.duration.setText(Html.fromHtml(duration));
+        holder.notes.setText(Html.fromHtml(notes));
+        holder.min.setText(Html.fromHtml(min));
+        holder.max.setText(Html.fromHtml(max));
+        holder.average.setText(Html.fromHtml(average));
+
 
 
 

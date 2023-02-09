@@ -38,14 +38,13 @@ public class DashboardActivity extends AppCompatActivity implements SortBy_Inter
         configureToolBar();
 
         sortBy_List.add(new sortBy_modelData("Date",false));
-        sortBy_List.add(new sortBy_modelData("Time",false));
 
         file_list.add(new FileModel("ECG20230237_141239",
                 "02/02/2023 11:22:45 AM",1,1,"Mumbai",10,10,10,
                 "InternalStorage","5 Min","ABCDEFG"));
         file_list.add(new FileModel("ECG20102237_141239",
-                "02/02/2023 11:22:45 AM",1,1,"Pune",10,10,10,
-                "InternalStorage","5 Min","XYZW"));
+                "02/02/2023 03:45:00 PM",1,1,"Pune",10,10,10,
+                "InternalStorage","8 Min","XYZW"));
 
         setAdapterData();
 

@@ -7,7 +7,6 @@
     tools:context=".CameraActivity">
 
     <FrameLayout
-        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/text_black"
@@ -16,6 +15,11 @@
         app:layout_constraintTop_toTopOf="parent">
 
 
+        <TextureView
+            android:id="@+id/camera_textureView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextureView>
     </FrameLayout>
 
 
@@ -42,14 +46,14 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/Text"
+            android:id="@+id/bluetoothCountTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="40dp"
             android:background="@color/text_black"
             android:padding="5dp"
             android:text="50"
-            android:textColor="#F1D903"
+            android:textColor="@color/text_yellow"
             android:textSize="30dp"
             android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -57,35 +61,34 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/timeTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="100dp"
             android:background="@color/text_black"
             android:padding="5dp"
             android:text="Time"
-
-            android:textColor="#F1D903"
+            android:textColor="@color/text_yellow"
             android:textSize="22sp"
-            app:layout_constraintEnd_toEndOf="@+id/recordBTN"
-            app:layout_constraintStart_toStartOf="@+id/recordBTN"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/dateTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
             android:background="@color/text_black"
             android:padding="5dp"
             android:text="Date"
-            android:textColor="#F1D903"
+            android:textColor="@color/text_yellow"
             android:textSize="22sp"
-            app:layout_constraintEnd_toStartOf="@+id/textView"
+            app:layout_constraintEnd_toStartOf="@+id/timeTV"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
-            android:id="@+id/recordBTN"
+            android:id="@+id/recordBTN_IV"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginEnd="20dp"
@@ -96,52 +99,56 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
-            android:id="@+id/flashBTN"
+            android:id="@+id/flashBTN_IV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
             android:padding="8dp"
             android:src="@drawable/ic_flash_off"
-            app:layout_constraintEnd_toEndOf="@+id/recordBTN"
-            app:layout_constraintStart_toStartOf="@+id/recordBTN"
-            app:layout_constraintTop_toBottomOf="@+id/recordBTN" />
+            app:layout_constraintEnd_toEndOf="@+id/recordBTN_IV"
+            app:layout_constraintStart_toStartOf="@+id/recordBTN_IV"
+            app:layout_constraintTop_toBottomOf="@+id/recordBTN_IV" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/frameLayout"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginBottom="50dp"
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/latitudeTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="6dp"
+            android:layout_marginEnd="30dp"
             android:layout_marginBottom="25dp"
             android:text="Latitude"
-            android:layout_margin="10dp"
-            android:textColor="@color/text_white"
-            android:textSize="22sp"
+            android:background="@color/text_black"
+            android:textColor="@color/text_yellow"
+            android:textSize="16sp"
             android:textStyle="bold" />
+
         <TextView
+            android:id="@+id/longitudeTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="6dp"
+            android:layout_marginStart="30dp"
             android:layout_marginBottom="25dp"
             android:text="Longitude"
-            android:textColor="@color/text_white"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_margin="10dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:background="@color/text_black"
+            android:textColor="@color/text_yellow"
+            android:textSize="16sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/cameraRecordTiming"
+        android:id="@+id/recordingTimeTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="25dp"
