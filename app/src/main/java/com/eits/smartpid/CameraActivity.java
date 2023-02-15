@@ -5,6 +5,7 @@ import static android.content.ContentValues.TAG;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.exifinterface.media.ExifInterface;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -41,6 +42,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.Settings;
 import android.speech.SpeechRecognizer;
+import android.util.JsonReader;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -55,13 +57,26 @@ import android.widget.Toast;
 import com.arthenica.mobileffmpeg.Config;
 import com.arthenica.mobileffmpeg.FFmpeg;
 
+
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -75,7 +90,7 @@ public class CameraActivity extends AppCompatActivity {
 
     Boolean mIsRecording = false;
     File mVideoFolder;
-    String mVideoFileName, mTempVideoFileName;
+    String fileName,mVideoFileName, mTempVideoFileName, json;
 
     ProgressDialog progressDialog;
 
@@ -87,7 +102,7 @@ public class CameraActivity extends AppCompatActivity {
     Handler handler;
 
 
-    int seconds=0;
+    int seconds = 0;
     MediaRecorder mMediaRecorder;
 
     boolean isSurfaceAvailable = false;
@@ -338,7 +353,7 @@ public class CameraActivity extends AppCompatActivity {
         progressDialog.show();
 
         recordingTimer.cancel();
-        seconds=0;
+        seconds = 0;
 
         hideSystemUI();
         countDownTimer.cancel();
@@ -372,19 +387,23 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
 
-
     }
 
 
     private void TextOnVideo(String fileSavePath) throws IOException {
         createVideoFileName();
+        createJSON();
 
-        String a = "-y -i " + fileSavePath + " -framerate 60 -vf [in]" + text() + "[out] " + mVideoFileName;
+        String a = "-y -i " + fileSavePath + " -metadata comment=" + json + " -framerate 60 -vf [in]" + text() + "[out] " + mVideoFileName;
         Log.e("text Value", a);
 
         long executionId = FFmpeg.executeAsync(a, (executionId1, returnCode) -> {
             if (returnCode == Config.RETURN_CODE_SUCCESS) {
-                addDataInSqlite();
+                try {
+                    addDataInSqlite();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 progressDialog.dismiss();
                 MinMaxAvgList.clear();
                 mIsRecording = false;
@@ -398,31 +417,124 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    private void addDataInSqlite() {
+    private void addDataInSqlite() throws IOException {
         Toast.makeText(this, "Video Saved Successfully", Toast.LENGTH_SHORT).show();
         File file1 = new File(mTempVideoFileName);
         file1.delete();
 
+        String filePath = mVideoFolder + File.separator + "fileName1" + ".txt";
+        File file = new File(filePath);
+        String filepathTXT = file.getAbsolutePath();
+
+
+     //   FileWriter writer = new FileWriter(filepathTXT);
+//        writer.append("First string is here to be written.");
+//        writer.flush();
+//        writer.close();
+
+        String a= " -y -i "+mVideoFileName+" -f ffmetadata "+filepathTXT;
+        long executionId = FFmpeg.executeAsync(a, (executionId1, returnCode) -> {
+            if (returnCode == Config.RETURN_CODE_SUCCESS) {
+                Toast.makeText(this, "Done", Toast.LENGTH_SHORT).show();
+                BufferedReader reader;
+                try {
+                    reader = new BufferedReader(new FileReader(filepathTXT));
+                    String line = reader.readLine();
+                    while (line != null) {
+                        if(line.startsWith("comment")) {
+                            String val=line.substring(8);
+                            String sDecoded= URLDecoder.decode(val,"UTF-8");
+
+                            try {
+                               JSONObject jObj = new JSONObject(sDecoded);
+                               String t = jObj.getString("videoTitle");
+                               String c = jObj.getString("component");
+                               String f = jObj.getString("facility");
+                               String s = jObj.getString("sitelocation");
+                               String notes= jObj.getString("notes");
+
+                               System.out.println(t);
+                               System.out.println(c);
+                               System.out.println(f);
+                               System.out.println(s);
+                               System.out.println(notes);
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+
+                        }
+                        line = reader.readLine();
+                    }
+                    reader.close();
+
+                    File file2=new File(filepathTXT);
+                    file2.delete();
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (returnCode == Config.RETURN_CODE_CANCEL) {
+                Toast.makeText(this, "error", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "error1", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+
     }
+
+    private void createJSON() throws IOException {
+        try {
+            // Create a new instance of a JSONObject
+            final JSONObject object = new JSONObject();
+            // With put you can add a name/value pair to the JSONObject
+            object.put("videoTitle", fileName);
+            object.put("component", "Flange");
+            object.put("facility", "New facility");
+            object.put("sitelocation", "Mumbai");
+            object.put("notes", "NotesOO"+"kkk"+"KKK");
+            object.put("min", 1);
+            object.put("max", 50);
+            object.put("average", 25);
+
+            // Calling toString() on the JSONObject returns the JSON in string format.
+
+            json = object.toString();
+            String sEncoded = URLEncoder.encode(json, "UTF-8");
+            json = sEncoded;
+            System.out.println("ENCODER : "+sEncoded);
+
+            String sDecoded= URLDecoder.decode(json,"UTF-8");
+            System.out.println(" : "+sDecoded);
+
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to create JSONObject", e);
+        }
+    }
+
 
     private String text() {
         String text = "";
         for (int i = 0; i < MinMaxAvgList.size(); i++) {
-            String LAT="LAT-"+i;
-            String LON="LON-"+i;
+            String LAT = "LAT-" + i;
+            String LON = "LON-" + i;
 
             if (i < MinMaxAvgList.size() - 1) {
                 text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text='09/02/2022':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text='Test Time':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")',"+
-                        "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',"+
+                        "drawtext=text='Test Time':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + LON + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',";
 
             } else {
                 text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text='09/02/2022':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")',"+
-                        "drawtext=text='Test Time':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")',"+
-                        "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',"+
+                        "drawtext=text='09/02/2022':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text='Test Time':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + LON + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'";
             }
         }
@@ -464,7 +576,6 @@ public class CameraActivity extends AppCompatActivity {
                 mCaptureRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
             }
             mRecordCaptureSession.setRepeatingRequest(mCaptureRequestBuilder.build(), null, null);
-
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -767,6 +878,7 @@ public class CameraActivity extends AppCompatActivity {
                     recordingTimeTV.setText(finalTime);
                 }
             }
+
             @Override
             public void onFinish() {
 
@@ -873,14 +985,16 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+
     private void createVideoFileName() throws IOException {
         String timestamp = new SimpleDateFormat("YYYYMMDD_HHmmss").format(new Date());
-        String fileName = "ECG" + timestamp;
+        fileName = "ECG" + timestamp;
 
         String filePath = mVideoFolder + File.separator + fileName + ".mp4";
         File file = new File(filePath);
         mVideoFileName = file.getAbsolutePath();
     }
+
 
     private void createTempFFmPEGVideoFileName() throws IOException {
         String timestamp = new SimpleDateFormat("YYYYMMDD_HHmmss").format(new Date());

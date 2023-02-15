@@ -13,6 +13,7 @@ public class FileModel {
     String  fileDuration;
     String fileNote;
 
+
     public FileModel(String fileName, String fileDateTime, int compID, int facID, String fileSiteLocation, float fileMin, float fileMax, float fileAverage, String filePath, String fileDuration, String fileNote) {
         this.fileName = fileName;
         this.fileDateTime = fileDateTime;
