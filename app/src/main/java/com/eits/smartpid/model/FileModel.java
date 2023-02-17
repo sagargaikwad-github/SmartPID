@@ -3,18 +3,18 @@ package com.eits.smartpid.model;
 public class FileModel {
     String fileName;
     String fileDateTime;
-    int compID;
-    int facID;
+    String compID;
+    String  facID;
     String fileSiteLocation;
-    float fileMin;
-    float fileMax;
-    float fileAverage;
+    String fileMin;
+    String fileMax;
+    String fileAverage;
     String filePath;
     String  fileDuration;
     String fileNote;
 
 
-    public FileModel(String fileName, String fileDateTime, int compID, int facID, String fileSiteLocation, float fileMin, float fileMax, float fileAverage, String filePath, String fileDuration, String fileNote) {
+    public FileModel(String fileName, String fileDateTime, String compID, String facID, String fileSiteLocation, String fileMin, String fileMax, String fileAverage, String filePath, String fileDuration, String fileNote) {
         this.fileName = fileName;
         this.fileDateTime = fileDateTime;
         this.compID = compID;
@@ -44,19 +44,19 @@ public class FileModel {
         this.fileDateTime = fileDateTime;
     }
 
-    public int getCompID() {
+    public String getCompID() {
         return compID;
     }
 
-    public void setCompID(int compID) {
+    public void setCompID(String compID) {
         this.compID = compID;
     }
 
-    public int getFacID() {
+    public String getFacID() {
         return facID;
     }
 
-    public void setFacID(int facID) {
+    public void setFacID(String facID) {
         this.facID = facID;
     }
 
@@ -68,27 +68,27 @@ public class FileModel {
         this.fileSiteLocation = fileSiteLocation;
     }
 
-    public float getFileMin() {
+    public String getFileMin() {
         return fileMin;
     }
 
-    public void setFileMin(float fileMin) {
+    public void setFileMin(String fileMin) {
         this.fileMin = fileMin;
     }
 
-    public float getFileMax() {
+    public String getFileMax() {
         return fileMax;
     }
 
-    public void setFileMax(float fileMax) {
+    public void setFileMax(String fileMax) {
         this.fileMax = fileMax;
     }
 
-    public float getFileAverage() {
+    public String getFileAverage() {
         return fileAverage;
     }
 
-    public void setFileAverage(float fileAverage) {
+    public void setFileAverage(String fileAverage) {
         this.fileAverage = fileAverage;
     }
 

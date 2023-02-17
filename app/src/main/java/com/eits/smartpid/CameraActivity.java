@@ -58,7 +58,6 @@ import com.arthenica.mobileffmpeg.Config;
 import com.arthenica.mobileffmpeg.FFmpeg;
 
 
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -74,6 +73,9 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -90,7 +92,7 @@ public class CameraActivity extends AppCompatActivity {
 
     Boolean mIsRecording = false;
     File mVideoFolder;
-    String fileName,mVideoFileName, mTempVideoFileName, json;
+    String fileName, mVideoFileName, mTempVideoFileName, json, RecordingDate;
 
     ProgressDialog progressDialog;
 
@@ -98,9 +100,10 @@ public class CameraActivity extends AppCompatActivity {
     CountDownTimer recordingTimer;
     String finalTime;
     ArrayList<Float> MinMaxAvgList;
+    ArrayList<String> TimeArrayList;
 
     Handler handler;
-
+    Runnable runnable;
 
     int seconds = 0;
     MediaRecorder mMediaRecorder;
@@ -132,21 +135,32 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
+        //Permissions for Camera:
         checkCameraPermissions();
+
+        //ArrayList for Save Bluetooth Data:
         MinMaxAvgList = new ArrayList<>();
 
+        //FindID's:
         findID();
+
+        //AllOnClicks in One Function:
         setOnClick();
 
-        handler = new Handler();
-
         progressDialog = new ProgressDialog(this);
+
+        //Making Video Folder
         createVideoFolder();
+
+        //Initialize Media Recorder
         mMediaRecorder = new MediaRecorder();
 
+        //For Displaying Date and Time;
+        Time();
     }
 
     private void setOnClick() {
+        //ViewFiles Currently TopLeft on CameraActivityScreen:
         viewFilesTV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -155,6 +169,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+        //Recording Button Handle:
         mRecordImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -168,7 +183,7 @@ public class CameraActivity extends AppCompatActivity {
                                     try {
                                         stopRecord();
                                     } catch (RuntimeException e) {
-                                        Toast.makeText(CameraActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        Log.e("Stop Record", "error at stop recording");
                                     }
                                     startPreview();
                                 }
@@ -209,6 +224,8 @@ public class CameraActivity extends AppCompatActivity {
                 }
             }
         });
+
+        //Flash ON/OFF Handling:
         flashBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -220,16 +237,21 @@ public class CameraActivity extends AppCompatActivity {
                     flashBTN.setImageResource(R.drawable.ic_flash_on);
                 }
 
+                //If Recording is started and We Click flashLight Button so ,
+                //FlashStatus going are ON or OFF.
+
+
+                // If Recording is ON, we can handle FlashLight using toggleFlashModeRecord(flashStatus) function;
                 if (mIsRecording) {
                     try {
                         toggleFlashModeRecord(flashStatus);
                     } catch (Exception e) {
-                        //   Toast.makeText(CameraActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
                     }
-                } else {
+                }
+                // If Recording is off , we cam off handle FlashLight usinng toggleFlashMode(flashStatus) function;
+                else {
                     toggleFlashMode(flashStatus);
                 }
-
             }
         });
     }
@@ -246,6 +268,8 @@ public class CameraActivity extends AppCompatActivity {
         timeTV = findViewById(R.id.timeTV);
         mRecordImageButton = findViewById(R.id.recordBTN_IV);
         flashBTN = findViewById(R.id.flashBTN_IV);
+
+
     }
 
     TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
@@ -406,6 +430,9 @@ public class CameraActivity extends AppCompatActivity {
                 }
                 progressDialog.dismiss();
                 MinMaxAvgList.clear();
+                TimeArrayList.clear();
+
+
                 mIsRecording = false;
                 countDownTimer.start();
                 recordingTimeTV.setText("00:00:00");
@@ -422,118 +449,140 @@ public class CameraActivity extends AppCompatActivity {
         File file1 = new File(mTempVideoFileName);
         file1.delete();
 
-        String filePath = mVideoFolder + File.separator + "fileName1" + ".txt";
-        File file = new File(filePath);
-        String filepathTXT = file.getAbsolutePath();
-
-
-     //   FileWriter writer = new FileWriter(filepathTXT);
-//        writer.append("First string is here to be written.");
-//        writer.flush();
-//        writer.close();
-
-        String a= " -y -i "+mVideoFileName+" -f ffmetadata "+filepathTXT;
-        long executionId = FFmpeg.executeAsync(a, (executionId1, returnCode) -> {
-            if (returnCode == Config.RETURN_CODE_SUCCESS) {
-                Toast.makeText(this, "Done", Toast.LENGTH_SHORT).show();
-                BufferedReader reader;
-                try {
-                    reader = new BufferedReader(new FileReader(filepathTXT));
-                    String line = reader.readLine();
-                    while (line != null) {
-                        if(line.startsWith("comment")) {
-                            String val=line.substring(8);
-                            String sDecoded= URLDecoder.decode(val,"UTF-8");
-
-                            try {
-                               JSONObject jObj = new JSONObject(sDecoded);
-                               String t = jObj.getString("videoTitle");
-                               String c = jObj.getString("component");
-                               String f = jObj.getString("facility");
-                               String s = jObj.getString("sitelocation");
-                               String notes= jObj.getString("notes");
-
-                               System.out.println(t);
-                               System.out.println(c);
-                               System.out.println(f);
-                               System.out.println(s);
-                               System.out.println(notes);
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-
-                        }
-                        line = reader.readLine();
-                    }
-                    reader.close();
-
-                    File file2=new File(filepathTXT);
-                    file2.delete();
-
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } else if (returnCode == Config.RETURN_CODE_CANCEL) {
-                Toast.makeText(this, "error", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "error1", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
+//        String filePath = mVideoFolder + File.separator + "fileName1" + ".txt";
+//        File file = new File(filePath);
+//        String filepathTXT = file.getAbsolutePath();
+//
+//
+//     //   FileWriter writer = new FileWriter(filepathTXT);
+////        writer.append("First string is here to be written.");
+////        writer.flush();
+////        writer.close();
+//
+//        String a= " -y -i "+mVideoFileName+" -f ffmetadata "+filepathTXT;
+//        long executionId = FFmpeg.executeAsync(a, (executionId1, returnCode) -> {
+//            if (returnCode == Config.RETURN_CODE_SUCCESS) {
+//                Toast.makeText(this, "Done", Toast.LENGTH_SHORT).show();
+//                BufferedReader reader;
+//                try {
+//                    reader = new BufferedReader(new FileReader(filepathTXT));
+//                    String line = reader.readLine();
+//                    while (line != null) {
+//                        if(line.startsWith("comment")) {
+//                            String val=line.substring(8);
+//                            String sDecoded= URLDecoder.decode(val,"UTF-8");
+//
+//                            try {
+//                               JSONObject jObj = new JSONObject(sDecoded);
+//                               String t = jObj.getString("videoTitle");
+//                               String c = jObj.getString("component");
+//                               String f = jObj.getString("facility");
+//                               String s = jObj.getString("sitelocation");
+//                               String notes= jObj.getString("notes");
+//
+//                               System.out.println(t);
+//                               System.out.println(c);
+//                               System.out.println(f);
+//                               System.out.println(s);
+//                               System.out.println(notes);
+//
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//
+//
+//                        }
+//                        line = reader.readLine();
+//                    }
+//                    reader.close();
+//
+//                    File file2=new File(filepathTXT);
+//                    file2.delete();
+//
+//
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            } else if (returnCode == Config.RETURN_CODE_CANCEL) {
+//                Toast.makeText(this, "error", Toast.LENGTH_SHORT).show();
+//            } else {
+//                Toast.makeText(this, "error1", Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
     }
 
     private void createJSON() throws IOException {
+
+        float Min = MinMaxAvgList.get(0);
+        for (int i = 0; i < MinMaxAvgList.size(); i++) {
+            if (Min > MinMaxAvgList.get(i)) {
+                Min = MinMaxAvgList.get(i);
+            }
+        }
+
+        float Max = MinMaxAvgList.get(0);
+        for (int i = 0; i < MinMaxAvgList.size(); i++) {
+            if (Max < MinMaxAvgList.get(i)) {
+                Max = MinMaxAvgList.get(i);
+            }
+        }
+
+        float Total = 0;
+        for (int i = 0; i < MinMaxAvgList.size(); i++) {
+            Total = Total + MinMaxAvgList.get(i);
+        }
+        float Average = Total / MinMaxAvgList.size();
+
+
         try {
             // Create a new instance of a JSONObject
             final JSONObject object = new JSONObject();
             // With put you can add a name/value pair to the JSONObject
-            object.put("videoTitle", fileName);
+            object.put("videoTitle", fileName + ".mp4");
             object.put("component", "Flange");
-            object.put("facility", "New facility");
-            object.put("sitelocation", "Mumbai");
-            object.put("notes", "NotesOO"+"kkk"+"KKK");
-            object.put("min", 1);
-            object.put("max", 50);
-            object.put("average", 25);
+            object.put("facility", "ok facility");
+            object.put("sitelocation", "Kolhapur");
+            object.put("notes", "NotesOsssO" + "kkk" + "KKK");
+            object.put("min", String.valueOf(Min));
+            object.put("max", String.valueOf(Max));
+            object.put("average", String.valueOf(Average));
 
             // Calling toString() on the JSONObject returns the JSON in string format.
 
             json = object.toString();
             String sEncoded = URLEncoder.encode(json, "UTF-8");
             json = sEncoded;
-            System.out.println("ENCODER : "+sEncoded);
+            System.out.println("ENCODER : " + sEncoded);
 
-            String sDecoded= URLDecoder.decode(json,"UTF-8");
-            System.out.println(" : "+sDecoded);
+            String sDecoded = URLDecoder.decode(json, "UTF-8");
+            System.out.println(" : " + sDecoded);
 
         } catch (JSONException e) {
             Log.e(TAG, "Failed to create JSONObject", e);
         }
     }
 
-
     private String text() {
         String text = "";
         for (int i = 0; i < MinMaxAvgList.size(); i++) {
+
             String LAT = "LAT-" + i;
             String LON = "LON-" + i;
 
+            System.out.println("TimeArray : " + TimeArrayList.get(i));
+
             if (i < MinMaxAvgList.size() - 1) {
                 text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text='09/02/2022':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text='Test Time':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + LON + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',";
 
             } else {
                 text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text='09/02/2022':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text='Test Time':fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + LON + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'";
             }
@@ -555,7 +604,6 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void toggleFlashMode(boolean flashStatus) {
-
         try {
             if (flashStatus) {
                 mCaptureRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
@@ -588,6 +636,8 @@ public class CameraActivity extends AppCompatActivity {
 
         startBackgroundThread();
 
+        TimeArrayList = new ArrayList<>();
+
         if (mTextureView.isAvailable()) {
             setUpCamera(mTextureView.getWidth(), mTextureView.getHeight());
             if (isSurfaceAvailable == true) {
@@ -596,11 +646,47 @@ public class CameraActivity extends AppCompatActivity {
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
         }
+
         countDown();
         countDownTimer.start();
-
     }
 
+
+    //Need Time Continuously on Screen So we add this in a handler:
+    private void Time() {
+        handler = new Handler();
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+
+                LocalDateTime myObj = LocalDateTime.now();
+
+                //Date
+                DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                String formattedDate = myObj.format(dateFormat);
+                dateTV.setText(formattedDate);
+                RecordingDate = formattedDate;
+
+                //Time
+                DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+                DateTimeFormatter timeFormatter1 = DateTimeFormatter.ofPattern("HH\\\\:mm\\\\:ss");
+
+                String formattedTime = myObj.format(timeFormatter);
+                String formattedTime1 = myObj.format(timeFormatter1);
+
+                timeTV.setText(formattedTime);
+
+                if (mIsRecording) {
+                    TimeArrayList.add(formattedTime1);
+                }
+                handler.postDelayed(runnable, 1000);
+            }
+        };
+        handler.post(runnable);
+    }
+
+
+    //This countDown Function used for Bluetooth Data:
     private void countDown() {
         countDownTimer = new CountDownTimer(50000, 1000) {
             @Override
@@ -660,22 +746,23 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-
     @Override
     protected void onPause() {
         super.onPause();
 
-        countDownTimer.cancel();
+        //We will Stop VideoRecording when this lifecycle will appear.
+        //so all components will stop like countdown, if recording is on then stop recording.
 
+        countDownTimer.cancel();
         stopBackgroundThread();
 
+
+        //Stop Recording if On
         if (mIsRecording == true) {
             stopRecord();
         }
-
         mIsRecording = false;
         mRecordImageButton.setImageResource(R.drawable.record_paused);
-
         try {
             mMediaRecorder.stop();
             mMediaRecorder.reset();
@@ -683,6 +770,7 @@ public class CameraActivity extends AppCompatActivity {
 
         }
 
+        //Turn off Flash if ON:
         flashStatus = false;
         if (flashStatus) {
             flashBTN.setImageResource(R.drawable.ic_flash_on);
@@ -757,7 +845,7 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-    //CameraPermissions
+
     @SuppressLint("MissingPermission")
     private void connectCamera() {
         CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -769,6 +857,8 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
+
+    //If Rationale Permissions are needed at that Time this function is used we only pass Permission name in string
     private void permissionDialog(String name) {
         new AlertDialog.Builder(CameraActivity.this)
                 .setTitle(name + " permission Denied ")
@@ -800,6 +890,8 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+
+    //Recording Started
     private void startRecord() {
         try {
             closePreviewSession();
@@ -857,6 +949,7 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    //Recording Timer Customization:
     public void RecordingTimer() {
         recordingTimer = new CountDownTimer(Long.MAX_VALUE, 1000) {
             @Override
@@ -888,7 +981,7 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-
+    //Camera PreView Launch:
     private void startPreview() {
         SurfaceTexture surfaceTexture = mTextureView.getSurfaceTexture();
 
@@ -912,7 +1005,7 @@ public class CameraActivity extends AppCompatActivity {
                             mPreviewCaptureSession = cameraCaptureSession;
                             try {
                                 mPreviewCaptureSession.setRepeatingRequest(mCaptureRequestBuilder.build(),
-                                        null, mBackgroundHandler);
+                                        null, null); //Nackgroundasdd
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -951,15 +1044,12 @@ public class CameraActivity extends AppCompatActivity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-
     }
 
     private static int sensorToDeviceOrientation(CameraCharacteristics cameraCharacteristics, int deviceOrientation) {
         int sensorOrientation = cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         deviceOrientation = ORIENTATIONS.get(deviceOrientation);
         return (sensorOrientation + deviceOrientation * 1 + 360) % 360;
-
     }
 
     private static Size chooseOptimalSize(Size[] choices, int width, int height) {
@@ -977,6 +1067,7 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    //Created Folder for Saving Files:
     private void createVideoFolder() {
         File movieFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         mVideoFolder = new File(movieFile, "InspRec");
@@ -985,9 +1076,10 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-
+    //Created this File for Saving a FFMpeg Edited video:
+    //This are a Final VideoFile Output.
     private void createVideoFileName() throws IOException {
-        String timestamp = new SimpleDateFormat("YYYYMMDD_HHmmss").format(new Date());
+        String timestamp = new SimpleDateFormat("YYYYMMdd_HHmmss").format(new Date());
         fileName = "ECG" + timestamp;
 
         String filePath = mVideoFolder + File.separator + fileName + ".mp4";
@@ -995,16 +1087,18 @@ public class CameraActivity extends AppCompatActivity {
         mVideoFileName = file.getAbsolutePath();
     }
 
-
+    //Created this File for Saving a Recorded video and using this file we can Operation a FFMPEG Commands:
+    //Function Name are like this are a final output , but it's not it is only a CameraRecorded video file:
     private void createTempFFmPEGVideoFileName() throws IOException {
-        String timestamp = new SimpleDateFormat("YYYYMMDD_HHmmss").format(new Date());
-        String fileName = "ECG-ffmpeg" + timestamp;
+        String timestamp = new SimpleDateFormat("YYYYMMdd_HHmmss").format(new Date());
 
+        String fileName = "ECG-ffmpeg" + timestamp;
         String filePath = mVideoFolder + File.separator + fileName + ".mp4";
         File file = new File(filePath);
         mTempVideoFileName = file.getAbsolutePath();
     }
 
+    //Storage Permission:
     private void checkWriteStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.MANAGE_EXTERNAL_STORAGE) ==
@@ -1026,25 +1120,30 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    //MediaRecorder for Saving for Recorded Video
     @SuppressLint("NewApi")
     private void setUpMediaRecorder() throws IOException {
+
+        //STEP 1: Created TempFile for Video Recording:
         try {
             createTempFFmPEGVideoFileName();
         } catch (Exception e) {
 
         }
 
+        //STEP 2: Video Recording Surface Send as VideoSource:
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
 
+
+        //STEP 3: CamcorderProfile for getting Device Maximum Capacity
         CamcorderProfile camcorderProfile;
-
+                           //IF Quality HIGH MAX Capacity we can get
         camcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+
+        //STEP 4: Set all other Functions to a mediaRecorder.
         int targetVideoBitRate = camcorderProfile.videoBitRate;
-
         mMediaRecorder.setOutputFile(mTempVideoFileName);
-
         mMediaRecorder.setVideoEncodingBitRate(targetVideoBitRate);
-
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mMediaRecorder.setVideoFrameRate(camcorderProfile.videoFrameRate);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
@@ -1054,6 +1153,8 @@ public class CameraActivity extends AppCompatActivity {
         System.out.println("Width : " + camcorderProfile.videoFrameWidth + " Height : " + camcorderProfile.videoFrameHeight);
 
 
+        //STEP 5: VideoSize gives error because SomeDevice not recording its Full capacity, so we customize this.
+        //Not all devices tested but some available devices are checked and its working Properly.
         if (mVideoSize.getWidth() < 1080) {
             mMediaRecorder.setVideoSize(960, 720);
         } else if (mVideoSize.getWidth() <= 1280) {
@@ -1063,15 +1164,16 @@ public class CameraActivity extends AppCompatActivity {
         }
 
 
+        //STEP 6: If any error from mediaRecorder from STEP2, prepare are Unsuccessful.
+        //After Successful Prepare we will start MediaRecorder that records our Screen.
         mMediaRecorder.prepare();
-
         mMediaRecorder.start();
-
 
     }
 
     @Override
     public void onBackPressed() {
+        //This handled for is when VideoConverting is happened, and user will clicks on backButton.
         if (progressDialog.isShowing()) {
             Toast.makeText(this, "Please Wait Video Processing needs to complete", Toast.LENGTH_SHORT).show();
         } else {
