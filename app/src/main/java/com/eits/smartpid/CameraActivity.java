@@ -15,6 +15,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
@@ -46,16 +47,28 @@ import android.util.JsonReader;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arthenica.mobileffmpeg.Config;
 import com.arthenica.mobileffmpeg.FFmpeg;
+import com.eits.smartpid.model.ComponentModel;
+import com.eits.smartpid.model.FacilityModel;
+import com.eits.smartpid.model.SQLiteModel;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputEditText;
 
 
 import org.json.JSONException;
@@ -69,6 +82,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
@@ -105,6 +119,12 @@ public class CameraActivity extends AppCompatActivity {
     Handler handler;
     Runnable runnable;
 
+    int ComponentSpinnerID, FacilitySpinnerID;
+
+
+    String Notes, SiteLocation;
+    int Facility=0 , Component=0 ;
+
     int seconds = 0;
     MediaRecorder mMediaRecorder;
 
@@ -129,6 +149,16 @@ public class CameraActivity extends AppCompatActivity {
     CameraCaptureSession mPreviewCaptureSession;
     CameraCaptureSession mRecordCaptureSession;
     CaptureRequest.Builder mCaptureRequestBuilder;
+
+
+    String[] ComponentArray;
+    String[] FacilityArray;
+
+    ArrayList<ComponentModel> Component_List = new ArrayList();
+    ArrayList<FacilityModel> Facility_List = new ArrayList();
+
+    SharedPreferences sharedPreferences;
+    SQLiteModel sqLiteModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,6 +187,8 @@ public class CameraActivity extends AppCompatActivity {
 
         //For Displaying Date and Time;
         Time();
+
+        sqLiteModel = new SQLiteModel(CameraActivity.this);
     }
 
     private void setOnClick() {
@@ -193,10 +225,97 @@ public class CameraActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     //  Toast.makeText(CameraActivity.this, "Recording Started", Toast.LENGTH_SHORT).show();
-                                    mIsRecording = true;
 
-                                    createVideoFolder();
-                                    startRecord();
+                                    ComponentArray = new String[Component_List.size()];
+                                    for (int i = 0; i < Component_List.size(); i++) {
+                                        ComponentArray[i] = Component_List.get(i).getCompName();
+                                    }
+
+                                    FacilityArray = new String[Facility_List.size()];
+                                    for (int i = 0; i < Facility_List.size(); i++) {
+                                        FacilityArray[i] = Facility_List.get(i).getFacName();
+                                    }
+
+                                    BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(CameraActivity.this);
+                                    BottomSheetBehavior<View> bottomSheetBehavior;
+                                    View bottomSheetView = LayoutInflater.from(CameraActivity.this).inflate(R.layout.bottomsheet_metadata, null);
+                                    bottomSheetDialog.setContentView(bottomSheetView);
+
+                                    bottomSheetBehavior = BottomSheetBehavior.from((View) bottomSheetView.getParent());
+                                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                                    bottomSheetBehavior.setDraggable(false);
+                                    bottomSheetBehavior.setMaxWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+                                    bottomSheetDialog.show();
+
+                                    Spinner FacilitySpinner = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_facility_spinner);
+                                    Spinner ComponentSpinner = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_component_spinner);
+                                    TextInputEditText siteLocation = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_siteLocation_ET);
+                                    TextInputEditText notes = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_Notes_ET);
+
+                                    Button SaveBTN = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_save_BTN);
+
+                                    ArrayAdapter facilityAdapter = new ArrayAdapter(CameraActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, FacilityArray);
+                                    FacilitySpinner.setAdapter(facilityAdapter);
+
+                                    ArrayAdapter componentAdapter = new ArrayAdapter(CameraActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, ComponentArray);
+                                    ComponentSpinner.setAdapter(componentAdapter);
+
+                                    sharedPreferences = getSharedPreferences("MetaData", MODE_PRIVATE);
+
+                                    int SP_component = 0, SP_facility = 0;
+                                    String SP_sitelocation = "", SP_Notes = "";
+                                    try {
+                                        SP_component = sharedPreferences.getInt("Component", 0);
+                                        SP_facility = sharedPreferences.getInt("Facility", 0);
+                                        SP_sitelocation = sharedPreferences.getString("SiteLocation", "");
+                                        SP_Notes = sharedPreferences.getString("Notes", "");
+                                    } catch (Exception e) {
+                                    }
+
+                                    FacilitySpinner.setSelection(SP_facility);
+                                    ComponentSpinner.setSelection(SP_component);
+
+                                    siteLocation.setText(SP_sitelocation);
+                                    notes.setText(SP_Notes);
+
+                                    SaveBTN.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            SharedPreferences.Editor editor = sharedPreferences.edit();
+
+                                            Component = ComponentSpinner.getSelectedItemPosition();
+                                            Facility = FacilitySpinner.getSelectedItemPosition();
+
+//                                            int ComponentID = Component_List.get(Component).getCompId();
+//                                            String ComponentName = Component_List.get(Component).getCompName();
+//                                            int FacilityID = Facility_List.get(Facility).getFacID();
+//                                            String FacilityName = Facility_List.get(Facility).getFacName();
+
+
+                                            SiteLocation = siteLocation.getText().toString();
+                                            Notes = notes.getText().toString();
+
+                                            if (Component != 0 && Facility != 0) {
+                                                bottomSheetDialog.dismiss();
+                                                mIsRecording = true;
+                                                createVideoFolder();
+                                                startRecord();
+                                                editor.putInt("Component", Component);
+                                                editor.putInt("Facility", Facility);
+                                                editor.putString("SiteLocation", SiteLocation);
+                                                editor.putString("Notes", Notes);
+                                                editor.commit();
+                                                Toast.makeText(CameraActivity.this, "Recording Started", Toast.LENGTH_SHORT).show();
+                                            } else {
+                                                if (Facility == 0) {
+                                                    Toast.makeText(CameraActivity.this, "Please Select Facility", Toast.LENGTH_SHORT).show();
+                                                } else {
+                                                    Toast.makeText(CameraActivity.this, "Please Select Component", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+
+                                        }
+                                    });
                                 }
                             }, 500);
 
@@ -413,7 +532,6 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-
     private void TextOnVideo(String fileSavePath) throws IOException {
         createVideoFileName();
         createJSON();
@@ -424,14 +542,13 @@ public class CameraActivity extends AppCompatActivity {
         long executionId = FFmpeg.executeAsync(a, (executionId1, returnCode) -> {
             if (returnCode == Config.RETURN_CODE_SUCCESS) {
                 try {
-                    addDataInSqlite();
+                    VideoSavedSuccessFully();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 progressDialog.dismiss();
                 MinMaxAvgList.clear();
                 TimeArrayList.clear();
-
 
                 mIsRecording = false;
                 countDownTimer.start();
@@ -444,72 +561,10 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    private void addDataInSqlite() throws IOException {
+    private void VideoSavedSuccessFully() throws IOException {
         Toast.makeText(this, "Video Saved Successfully", Toast.LENGTH_SHORT).show();
         File file1 = new File(mTempVideoFileName);
         file1.delete();
-
-//        String filePath = mVideoFolder + File.separator + "fileName1" + ".txt";
-//        File file = new File(filePath);
-//        String filepathTXT = file.getAbsolutePath();
-//
-//
-//     //   FileWriter writer = new FileWriter(filepathTXT);
-////        writer.append("First string is here to be written.");
-////        writer.flush();
-////        writer.close();
-//
-//        String a= " -y -i "+mVideoFileName+" -f ffmetadata "+filepathTXT;
-//        long executionId = FFmpeg.executeAsync(a, (executionId1, returnCode) -> {
-//            if (returnCode == Config.RETURN_CODE_SUCCESS) {
-//                Toast.makeText(this, "Done", Toast.LENGTH_SHORT).show();
-//                BufferedReader reader;
-//                try {
-//                    reader = new BufferedReader(new FileReader(filepathTXT));
-//                    String line = reader.readLine();
-//                    while (line != null) {
-//                        if(line.startsWith("comment")) {
-//                            String val=line.substring(8);
-//                            String sDecoded= URLDecoder.decode(val,"UTF-8");
-//
-//                            try {
-//                               JSONObject jObj = new JSONObject(sDecoded);
-//                               String t = jObj.getString("videoTitle");
-//                               String c = jObj.getString("component");
-//                               String f = jObj.getString("facility");
-//                               String s = jObj.getString("sitelocation");
-//                               String notes= jObj.getString("notes");
-//
-//                               System.out.println(t);
-//                               System.out.println(c);
-//                               System.out.println(f);
-//                               System.out.println(s);
-//                               System.out.println(notes);
-//
-//                            } catch (JSONException e) {
-//                                e.printStackTrace();
-//                            }
-//
-//
-//                        }
-//                        line = reader.readLine();
-//                    }
-//                    reader.close();
-//
-//                    File file2=new File(filepathTXT);
-//                    file2.delete();
-//
-//
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            } else if (returnCode == Config.RETURN_CODE_CANCEL) {
-//                Toast.makeText(this, "error", Toast.LENGTH_SHORT).show();
-//            } else {
-//                Toast.makeText(this, "error1", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-
     }
 
     private void createJSON() throws IOException {
@@ -540,10 +595,10 @@ public class CameraActivity extends AppCompatActivity {
             final JSONObject object = new JSONObject();
             // With put you can add a name/value pair to the JSONObject
             object.put("videoTitle", fileName + ".mp4");
-            object.put("component", "Flange");
-            object.put("facility", "ok facility");
-            object.put("sitelocation", "Kolhapur");
-            object.put("notes", "NotesOsssO" + "kkk" + "KKK");
+            object.put("component", Component);
+            object.put("facility", Facility);
+            object.put("sitelocation", SiteLocation);
+            object.put("notes", Notes);
             object.put("min", String.valueOf(Min));
             object.put("max", String.valueOf(Max));
             object.put("average", String.valueOf(Average));
@@ -555,8 +610,8 @@ public class CameraActivity extends AppCompatActivity {
             json = sEncoded;
             System.out.println("ENCODER : " + sEncoded);
 
-            String sDecoded = URLDecoder.decode(json, "UTF-8");
-            System.out.println(" : " + sDecoded);
+//            String sDecoded = URLDecoder.decode(json, "UTF-8");
+//            System.out.println(" : " + sDecoded);
 
         } catch (JSONException e) {
             Log.e(TAG, "Failed to create JSONObject", e);
@@ -636,6 +691,12 @@ public class CameraActivity extends AppCompatActivity {
 
         startBackgroundThread();
 
+        Facility_List.clear();
+        Component_List.clear();
+
+        Facility_List = sqLiteModel.getFacilityList();
+        Component_List = sqLiteModel.getComponentList();
+
         TimeArrayList = new ArrayList<>();
 
         if (mTextureView.isAvailable()) {
@@ -650,7 +711,6 @@ public class CameraActivity extends AppCompatActivity {
         countDown();
         countDownTimer.start();
     }
-
 
     //Need Time Continuously on Screen So we add this in a handler:
     private void Time() {
@@ -684,7 +744,6 @@ public class CameraActivity extends AppCompatActivity {
         };
         handler.post(runnable);
     }
-
 
     //This countDown Function used for Bluetooth Data:
     private void countDown() {
@@ -845,7 +904,6 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-
     @SuppressLint("MissingPermission")
     private void connectCamera() {
         CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -889,7 +947,6 @@ public class CameraActivity extends AppCompatActivity {
             mPreviewCaptureSession = null;
         }
     }
-
 
     //Recording Started
     private void startRecord() {
@@ -1005,7 +1062,7 @@ public class CameraActivity extends AppCompatActivity {
                             mPreviewCaptureSession = cameraCaptureSession;
                             try {
                                 mPreviewCaptureSession.setRepeatingRequest(mCaptureRequestBuilder.build(),
-                                        null, null); //Nackgroundasdd
+                                        null, mBackgroundHandler); //Nackgroundasdd
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -1137,7 +1194,7 @@ public class CameraActivity extends AppCompatActivity {
 
         //STEP 3: CamcorderProfile for getting Device Maximum Capacity
         CamcorderProfile camcorderProfile;
-                           //IF Quality HIGH MAX Capacity we can get
+        //IF Quality HIGH MAX Capacity we can get
         camcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
 
         //STEP 4: Set all other Functions to a mediaRecorder.

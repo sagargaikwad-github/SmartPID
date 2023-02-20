@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+   <LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:orientation="vertical">
+
+       <LinearLayout
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_marginTop="20dp"
+           android:layout_marginStart="32dp"
+           android:background="@drawable/filedata_background"
+           android:gravity="end">
+           <Spinner
+               android:id="@+id/bottomSheet_metadata_facility_spinner"
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:textColor="@color/text_black" />
+       </LinearLayout>
+       <LinearLayout
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_marginTop="20dp"
+           android:layout_marginStart="32dp"
+           android:background="@drawable/filedata_background"
+           android:gravity="end">
+
+           <Spinner
+               android:id="@+id/bottomSheet_metadata_component_spinner"
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:textColor="@color/text_black" />
+       </LinearLayout>
+       <com.google.android.material.textfield.TextInputLayout
+           android:id="@+id/bottomSheet_metadata_Layout"
+           style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+           android:layout_width="match_parent"
+           android:layout_marginStart="32dp"
+           android:layout_marginTop="20dp"
+           android:layout_marginEnd="32dp"
+           android:layout_height="wrap_content">
+
+           <com.google.android.material.textfield.TextInputEditText
+               android:id="@+id/bottomSheet_metadata_siteLocation_ET"
+               android:layout_width="match_parent"
+               android:textSize="16sp"
+               android:hint="Site/Location"
+               android:imeOptions="flagNoExtractUi"
+               android:singleLine="true"
+               android:layout_height="wrap_content">
+           </com.google.android.material.textfield.TextInputEditText>
+       </com.google.android.material.textfield.TextInputLayout>
+
+       <com.google.android.material.textfield.TextInputLayout
+           android:id="@+id/bottomSheet_metadata_NotesLayout"
+           style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+           android:layout_width="match_parent"
+           android:layout_marginStart="32dp"
+           android:layout_marginTop="20dp"
+           android:layout_marginEnd="32dp"
+           android:layout_height="wrap_content">
+           <com.google.android.material.textfield.TextInputEditText
+               android:id="@+id/bottomSheet_metadata_Notes_ET"
+               android:layout_width="match_parent"
+               android:textSize="16sp"
+               android:hint="Notes"
+               android:imeOptions="flagNoExtractUi"
+               android:layout_height="wrap_content">
+           </com.google.android.material.textfield.TextInputEditText>
+       </com.google.android.material.textfield.TextInputLayout>
+
+       <Button
+           android:id="@+id/bottomSheet_metadata_save_BTN"
+           android:layout_width="wrap_content"
+           android:text="Save"
+           android:padding="10dp"
+           android:layout_gravity="end"
+           android:gravity="center"
+           android:layout_marginEnd="32dp"
+           android:layout_marginTop="10dp"
+           android:textColor="@color/text_white"
+           android:layout_height="wrap_content"></Button>
+
+   </LinearLayout>
+
+
+</ScrollView>

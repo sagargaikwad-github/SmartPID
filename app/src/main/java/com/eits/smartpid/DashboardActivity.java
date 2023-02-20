@@ -11,6 +11,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -174,9 +175,9 @@ public class DashboardActivity extends AppCompatActivity implements SortBy_Inter
                     e.printStackTrace();
                 }
             } else if (returnCode == Config.RETURN_CODE_CANCEL) {
-                Toast.makeText(this, "error", Toast.LENGTH_SHORT).show();
+                Log.e("RETURN_CODE_CANCEL",String.valueOf(returnCode));
             } else {
-                Toast.makeText(this, "error1", Toast.LENGTH_SHORT).show();
+                Log.e("RETURN_CODE_ERROR",String.valueOf(returnCode));
             }
         });
     }
