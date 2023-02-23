@@ -3,21 +3,21 @@ package com.eits.smartpid;
 import static android.content.ContentValues.TAG;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.exifinterface.media.ExifInterface;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -27,12 +27,8 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
-import android.media.Image;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
@@ -42,8 +38,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.Settings;
-import android.speech.SpeechRecognizer;
-import android.util.JsonReader;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -52,8 +46,6 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -74,32 +66,24 @@ import com.google.android.material.textfield.TextInputEditText;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.lang.reflect.Array;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
+import java.util.Set;
 
-public class CameraActivity extends AppCompatActivity {
+public class CameraActivity extends BaseClass {
     private TextView bluetoothCount, timeTV, dateTV, latitudeTV, longitudeTV, recordingTimeTV, viewFilesTV;
     private TextureView mTextureView;
     private ImageView flashBTN, mRecordImageButton;
@@ -110,25 +94,30 @@ public class CameraActivity extends AppCompatActivity {
 
     ProgressDialog progressDialog;
 
-    CountDownTimer countDownTimer;
+    //CountDownTimer countDownTimer;
     CountDownTimer recordingTimer;
     String finalTime;
     ArrayList<Float> MinMaxAvgList;
     ArrayList<String> TimeArrayList;
 
     Handler handler;
+    Handler bluetoothHandler;
     Runnable runnable;
+    Runnable bluetoothRunnable;
 
     int ComponentSpinnerID, FacilitySpinnerID;
 
 
     String Notes, SiteLocation;
-    int Facility=0 , Component=0 ;
+    int Facility = 0, Component = 0;
 
     int seconds = 0;
     MediaRecorder mMediaRecorder;
 
     boolean isSurfaceAvailable = false;
+
+    SendReceieve sendReceieve;
+
 
     private static final int REQUEST_CAMERA_PERMISSION_RESULT = 100;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT = 200;
@@ -141,7 +130,6 @@ public class CameraActivity extends AppCompatActivity {
     Size mPreviewSize;
     Size mVideoSize;
 
-    Size mImageSize;
     View mdecorView;
     int mTotalRotation;
 
@@ -149,7 +137,6 @@ public class CameraActivity extends AppCompatActivity {
     CameraCaptureSession mPreviewCaptureSession;
     CameraCaptureSession mRecordCaptureSession;
     CaptureRequest.Builder mCaptureRequestBuilder;
-
 
     String[] ComponentArray;
     String[] FacilityArray;
@@ -160,6 +147,11 @@ public class CameraActivity extends AppCompatActivity {
     SharedPreferences sharedPreferences;
     SQLiteModel sqLiteModel;
 
+    BottomSheetDialog bottomSheetDialog;
+    BluetoothAdapter bluetoothAdapter;
+    BluetoothDevice[] paired_device_array;
+    ArrayAdapter arrayAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -168,14 +160,15 @@ public class CameraActivity extends AppCompatActivity {
         //Permissions for Camera:
         checkCameraPermissions();
 
-        //ArrayList for Save Bluetooth Data:
-        MinMaxAvgList = new ArrayList<>();
 
         //FindID's:
         findID();
 
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         //AllOnClicks in One Function:
         setOnClick();
+
 
         progressDialog = new ProgressDialog(this);
 
@@ -188,10 +181,19 @@ public class CameraActivity extends AppCompatActivity {
         //For Displaying Date and Time;
         Time();
 
+        countDown();
+
         sqLiteModel = new SQLiteModel(CameraActivity.this);
     }
 
     private void setOnClick() {
+        bluetoothCount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                checkBluetoothIsOn();
+            }
+        });
+
         //ViewFiles Currently TopLeft on CameraActivityScreen:
         viewFilesTV.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -215,7 +217,9 @@ public class CameraActivity extends AppCompatActivity {
                                     try {
                                         stopRecord();
                                     } catch (RuntimeException e) {
-                                        Log.e("Stop Record", "error at stop recording");
+                                        Toast.makeText(CameraActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
+                                        Log.e("STOP_RECORD_ERROR",e.getMessage());
+                                        Log.e("STOP_RECORD_ERROR",e.toString());
                                     }
                                     startPreview();
                                 }
@@ -236,16 +240,7 @@ public class CameraActivity extends AppCompatActivity {
                                         FacilityArray[i] = Facility_List.get(i).getFacName();
                                     }
 
-                                    BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(CameraActivity.this);
-                                    BottomSheetBehavior<View> bottomSheetBehavior;
-                                    View bottomSheetView = LayoutInflater.from(CameraActivity.this).inflate(R.layout.bottomsheet_metadata, null);
-                                    bottomSheetDialog.setContentView(bottomSheetView);
-
-                                    bottomSheetBehavior = BottomSheetBehavior.from((View) bottomSheetView.getParent());
-                                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                                    bottomSheetBehavior.setDraggable(false);
-                                    bottomSheetBehavior.setMaxWidth(ViewGroup.LayoutParams.MATCH_PARENT);
-                                    bottomSheetDialog.show();
+                                    BottomSheet(R.layout.bottomsheet_metadata);
 
                                     Spinner FacilitySpinner = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_facility_spinner);
                                     Spinner ComponentSpinner = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_component_spinner);
@@ -287,9 +282,9 @@ public class CameraActivity extends AppCompatActivity {
                                             Facility = FacilitySpinner.getSelectedItemPosition();
 
 //                                            int ComponentID = Component_List.get(Component).getCompId();
-//                                            String ComponentName = Component_List.get(Component).getCompName();
+                                         //   String ComponentName = Component_List.get(Component).getCompName();
 //                                            int FacilityID = Facility_List.get(Facility).getFacID();
-//                                            String FacilityName = Facility_List.get(Facility).getFacName();
+                                           // String FacilityName = Facility_List.get(Facility).getFacName();
 
 
                                             SiteLocation = siteLocation.getText().toString();
@@ -323,24 +318,25 @@ public class CameraActivity extends AppCompatActivity {
                     } else {
                         checkWriteStoragePermission();
                     }
-                } else {
-                    if (mIsRecording) {
-                        mIsRecording = false;
-                        mRecordImageButton.setImageResource(R.drawable.record_paused);
-
-                        //toggleFlashModeRecord(flashStatus);
-
-                        mMediaRecorder.stop();
-                        mMediaRecorder.reset();
-                        startPreview();
-                    } else {
-                        mIsRecording = true;
-                        mRecordImageButton.setImageResource(R.drawable.record_resumed);
-                        createVideoFolder();
-
-                        startRecord();
-                    }
                 }
+//                else {
+//                    if (mIsRecording) {
+//                        mIsRecording = false;
+//                        mRecordImageButton.setImageResource(R.drawable.record_paused);
+//
+//                        //toggleFlashModeRecord(flashStatus);
+//
+//                        mMediaRecorder.stop();
+//                        mMediaRecorder.reset();
+//                        startPreview();
+//                    } else {
+//                        mIsRecording = true;
+//                        mRecordImageButton.setImageResource(R.drawable.record_resumed);
+//                        createVideoFolder();
+//
+//                        startRecord();
+//                    }
+//                }
             }
         });
 
@@ -358,7 +354,6 @@ public class CameraActivity extends AppCompatActivity {
 
                 //If Recording is started and We Click flashLight Button so ,
                 //FlashStatus going are ON or OFF.
-
 
                 // If Recording is ON, we can handle FlashLight using toggleFlashModeRecord(flashStatus) function;
                 if (mIsRecording) {
@@ -397,8 +392,8 @@ public class CameraActivity extends AppCompatActivity {
             setUpCamera(i, i1);
             if (isSurfaceAvailable == true) {
                 connectCamera();
+                startBluetooth();
             }
-
         }
 
         @Override
@@ -416,6 +411,74 @@ public class CameraActivity extends AppCompatActivity {
 
         }
     };
+
+    private void startBluetooth() {
+        checkBluetoothIsOn();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void checkBluetoothIsOn() {
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(intent, 100);
+        } else {
+            bluetoothData();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void bluetoothData() {
+        @SuppressLint("MissingPermission")
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        String[] strings = new String[pairedDevices.size()];
+        paired_device_array = new BluetoothDevice[pairedDevices.size()];
+        int i = 0;
+
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
+                paired_device_array[i] = device;
+                strings[i] = device.getName();
+                i++;
+            }
+            arrayAdapter = new ArrayAdapter(CameraActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, strings);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(CameraActivity.this);
+            builder.setTitle("Choose Bluetooth Device");
+            builder.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int item) {
+                    ClientDevice clientDevice=new ClientDevice(paired_device_array[item]);
+                    clientDevice.start();
+                }
+            });
+            AlertDialog alert = builder.create();
+            alert.show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100 && resultCode == RESULT_OK) {
+            Toast.makeText(CameraActivity.this, "Bluetooth is Turned on", Toast.LENGTH_SHORT).show();
+            bluetoothData();
+        } else {
+            Toast.makeText(CameraActivity.this, "You need to Turn on Bluetooth", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void BottomSheet(int bottomSheet) {
+        bottomSheetDialog = new BottomSheetDialog(CameraActivity.this);
+        BottomSheetBehavior<View> bottomSheetBehavior;
+        View bottomSheetView = LayoutInflater.from(CameraActivity.this).inflate(bottomSheet, null);
+        bottomSheetDialog.setContentView(bottomSheetView);
+
+        bottomSheetBehavior = BottomSheetBehavior.from((View) bottomSheetView.getParent());
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        bottomSheetBehavior.setDraggable(false);
+        bottomSheetBehavior.setMaxWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        bottomSheetDialog.show();
+
+    }
 
     CameraDevice.StateCallback mCameraDeviceStateCallback = new CameraDevice.StateCallback() {
         @Override
@@ -453,6 +516,7 @@ public class CameraActivity extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+
 
     private static class CompareSizeByArea implements Comparator<Size> {
         @Override
@@ -499,7 +563,7 @@ public class CameraActivity extends AppCompatActivity {
         seconds = 0;
 
         hideSystemUI();
-        countDownTimer.cancel();
+        //countDownTimer.cancel();
 
         try {
             mMediaRecorder.stop();
@@ -551,7 +615,7 @@ public class CameraActivity extends AppCompatActivity {
                 TimeArrayList.clear();
 
                 mIsRecording = false;
-                countDownTimer.start();
+                //countDownTimer.start();
                 recordingTimeTV.setText("00:00:00");
             } else if (returnCode == Config.RETURN_CODE_CANCEL) {
                 progressDialog.dismiss();
@@ -568,6 +632,20 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void createJSON() throws IOException {
+        System.out.println("MinMaxSize : "+MinMaxAvgList.size());
+        for (int i=0;i<MinMaxAvgList.size();i++)
+        {
+            System.out.println("MinMax : "+i+" : "+MinMaxAvgList.get(i));
+        }
+
+
+        System.out.println("TimeArrayList : "+TimeArrayList.size());
+        for (int i=0;i<TimeArrayList.size();i++)
+        {
+            System.out.println("TimeArray : "+i+" : "+TimeArrayList.get(i));
+        }
+
+
 
         float Min = MinMaxAvgList.get(0);
         for (int i = 0; i < MinMaxAvgList.size(); i++) {
@@ -698,6 +776,7 @@ public class CameraActivity extends AppCompatActivity {
         Component_List = sqLiteModel.getComponentList();
 
         TimeArrayList = new ArrayList<>();
+        MinMaxAvgList = new ArrayList<>();
 
         if (mTextureView.isAvailable()) {
             setUpCamera(mTextureView.getWidth(), mTextureView.getHeight());
@@ -708,9 +787,10 @@ public class CameraActivity extends AppCompatActivity {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
         }
 
-        countDown();
-        countDownTimer.start();
+
+       //countDownTimer.start();
     }
+
 
     //Need Time Continuously on Screen So we add this in a handler:
     private void Time() {
@@ -718,9 +798,7 @@ public class CameraActivity extends AppCompatActivity {
         runnable = new Runnable() {
             @Override
             public void run() {
-
                 LocalDateTime myObj = LocalDateTime.now();
-
                 //Date
                 DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                 String formattedDate = myObj.format(dateFormat);
@@ -745,25 +823,21 @@ public class CameraActivity extends AppCompatActivity {
         handler.post(runnable);
     }
 
+
     //This countDown Function used for Bluetooth Data:
     private void countDown() {
-        countDownTimer = new CountDownTimer(50000, 1000) {
+         bluetoothHandler = new Handler();
+         bluetoothRunnable = new Runnable() {
             @Override
-            public void onTick(long l) {
-                int seconds = (int) (l / 1000);
-                bluetoothCount.setText(String.valueOf(seconds));
-
+            public void run() {
+                bluetoothCount.setText(String.valueOf(BluetoothText));
                 if (mIsRecording) {
                     MinMaxAvgList.add(Float.valueOf(bluetoothCount.getText().toString()));
                 }
-            }
-
-            @Override
-            public void onFinish() {
-                countDown();
-                countDownTimer.start();
+               bluetoothHandler.postDelayed(bluetoothRunnable,1000);
             }
         };
+        bluetoothHandler.post(bluetoothRunnable);
     }
 
     @Override
@@ -809,10 +883,16 @@ public class CameraActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
+       try {
+           sendReceieve.cancel();
+       }catch (Exception e)
+       {
+
+       }
         //We will Stop VideoRecording when this lifecycle will appear.
         //so all components will stop like countdown, if recording is on then stop recording.
 
-        countDownTimer.cancel();
+        //countDownTimer.cancel();
         stopBackgroundThread();
 
 
@@ -1189,7 +1269,12 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         //STEP 2: Video Recording Surface Send as VideoSource:
-        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        try {
+            mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        }catch (Exception e)
+        {
+
+        }
 
 
         //STEP 3: CamcorderProfile for getting Device Maximum Capacity

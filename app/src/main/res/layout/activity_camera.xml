@@ -14,7 +14,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-
         <TextureView
             android:id="@+id/camera_textureView"
             android:layout_width="match_parent"
@@ -52,7 +51,6 @@
             android:layout_margin="40dp"
             android:background="@color/text_black"
             android:padding="5dp"
-            android:text="50"
             android:textColor="@color/text_yellow"
             android:textSize="30dp"
             android:visibility="visible"

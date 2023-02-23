@@ -15,7 +15,7 @@ import android.widget.MediaController;
 import android.widget.VideoView;
 
 
-public class VideoPlayActivity extends AppCompatActivity {
+public class VideoPlayActivity extends BaseClass {
     MediaController mediaController;
     VideoView videoView;
     int startPosition;

@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.arthenica.mobileffmpeg.Config;
@@ -21,7 +22,10 @@ import com.eits.smartpid.Interface.FileDelete;
 import com.eits.smartpid.Interface.SortBy_Interface;
 import com.eits.smartpid.adapter.SortByAdapter;
 import com.eits.smartpid.adapter.VideoAdapter;
+import com.eits.smartpid.model.ComponentModel;
+import com.eits.smartpid.model.FacilityModel;
 import com.eits.smartpid.model.FileModel;
+import com.eits.smartpid.model.SQLiteModel;
 import com.eits.smartpid.model.sortBy_modelData;
 import com.eits.smartpid.model.videoModel;
 
@@ -40,7 +44,7 @@ import java.util.Comparator;
 import java.util.Date;
 
 
-public class DashboardActivity extends AppCompatActivity implements SortBy_Interface, FileDelete {
+public class DashboardActivity extends BaseClass implements SortBy_Interface, FileDelete {
     private RecyclerView dashboard_sortBy_RV, dashboard_fileDisplay_RV;
     private Toolbar dashboard_Toolbar;
 
@@ -54,11 +58,16 @@ public class DashboardActivity extends AppCompatActivity implements SortBy_Inter
     File mVideoFolder;
     String metaDataTitle, metaDataComponent, metaDataFacility, metaDataSiteLocation, metaDataNotes, metaDataMin, metaDataMax, metaDataAverage;
 
+    SQLiteModel sqLiteModel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+
+
+         sqLiteModel=new SQLiteModel(this);
 
         findID();
         configureToolBar();
@@ -137,17 +146,24 @@ public class DashboardActivity extends AppCompatActivity implements SortBy_Inter
                             try {
                                 JSONObject jObj = new JSONObject(sDecoded);
                                 String t = jObj.getString("videoTitle");
-                                String c = jObj.getString("component");
-                                String f = jObj.getString("facility");
+                                int c = jObj.getInt("component");
+                                int f = jObj.getInt("facility");
                                 String s = jObj.getString("sitelocation");
                                 String notes = jObj.getString("notes");
                                 String max = jObj.getString("max");
                                 String min = jObj.getString("min");
                                 String avg = jObj.getString("average");
 
+
+                                ArrayList<ComponentModel>comp_list=new ArrayList<>();
+                                comp_list=sqLiteModel.getComponentList();
+
+                                ArrayList<FacilityModel>facility_list=new ArrayList<>();
+                                facility_list=sqLiteModel.getFacilityList();
+
                                 metaDataTitle = t;
-                                metaDataComponent = c;
-                                metaDataFacility = f;
+                                metaDataComponent = comp_list.get(c).getCompName();
+                                metaDataFacility = facility_list.get(f).getFacName();
                                 metaDataSiteLocation = s;
                                 metaDataNotes = notes;
                                 metaDataMax=max;
