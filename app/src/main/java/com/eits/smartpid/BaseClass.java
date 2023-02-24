@@ -17,6 +17,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,13 +40,18 @@ public class BaseClass extends AppCompatActivity {
 
     String BluetoothText="0";
 
+
+
     @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         bluetoothAdapter=BluetoothAdapter.getDefaultAdapter();
+
+
     }
+
 
     @Override
     protected void onResume() {

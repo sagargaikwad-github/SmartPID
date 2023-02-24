@@ -2,8 +2,10 @@ package com.eits.smartpid;
 
 import static android.content.ContentValues.TAG;
 
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
@@ -13,9 +15,12 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Matrix;
@@ -28,8 +33,13 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,6 +47,7 @@ import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Size;
@@ -58,6 +69,22 @@ import com.arthenica.mobileffmpeg.FFmpeg;
 import com.eits.smartpid.model.ComponentModel;
 import com.eits.smartpid.model.FacilityModel;
 import com.eits.smartpid.model.SQLiteModel;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCanceledListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
@@ -84,9 +111,11 @@ import java.util.Random;
 import java.util.Set;
 
 public class CameraActivity extends BaseClass {
-    private TextView bluetoothCount, timeTV, dateTV, latitudeTV, longitudeTV, recordingTimeTV, viewFilesTV;
+    private TextView bluetoothCount, timeTV, dateTV, recordingTimeTV, viewFilesTV;
     private TextureView mTextureView;
     private ImageView flashBTN, mRecordImageButton;
+
+    TextView latitudeTV, longitudeTV;
 
     Boolean mIsRecording = false;
     File mVideoFolder;
@@ -102,8 +131,10 @@ public class CameraActivity extends BaseClass {
 
     Handler handler;
     Handler bluetoothHandler;
+    Handler locationHandler;
     Runnable runnable;
     Runnable bluetoothRunnable;
+    Runnable locationRunnable;
 
     int ComponentSpinnerID, FacilitySpinnerID;
 
@@ -122,6 +153,8 @@ public class CameraActivity extends BaseClass {
     private static final int REQUEST_CAMERA_PERMISSION_RESULT = 100;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT = 200;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT_ABOVE11 = 300;
+    private static final int REQUEST_LOCATION_PERMISSION = 400;
+
 
     private HandlerThread mBackgroundHandlerThread;
     private Handler mBackgroundHandler;
@@ -152,6 +185,15 @@ public class CameraActivity extends BaseClass {
     BluetoothDevice[] paired_device_array;
     ArrayAdapter arrayAdapter;
 
+
+    LocationRequest locationRequest;
+    FusedLocationProviderClient mFusedLocationClient;
+
+    BroadcastReceiver broadcastReceiver;
+
+    ArrayList<String> LatitudeList;
+    ArrayList<String> LongitudeList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -160,9 +202,71 @@ public class CameraActivity extends BaseClass {
         //Permissions for Camera:
         checkCameraPermissions();
 
+        broadcastReceiver = new BroadcastReceiver() {
+            @SuppressLint("MissingPermission")
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (isGPSEnabled()) {
+                    Toast.makeText(context, "Gps is Turned on", Toast.LENGTH_SHORT).show();
+                    locationHandle();
+
+                    LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                            .addLocationRequest(locationRequest);
+                    builder.setAlwaysShow(true);
+
+                    Task<LocationSettingsResponse> result = LocationServices.getSettingsClient(context)
+                            .checkLocationSettings(builder.build());
+                    result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                        @SuppressLint("MissingPermission")
+                        @Override
+                        public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                            try {
+                                LocationSettingsResponse response = task.getResult(ApiException.class);
+                                LocationCallback locationCallback = new LocationCallback() {
+                                    @Override
+                                    public void onLocationResult(LocationResult locationResult) {
+                                        if (locationResult != null) {
+                                            for (Location location : locationResult.getLocations()) {
+                                                latitudeTV.setText("LAT-" + String.valueOf(location.getLatitude()));
+                                                longitudeTV.setText("LONG-" + String.valueOf(location.getLongitude()));
+                                            }
+                                        } else {
+                                            Toast.makeText(context, "Hi", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                };
+                                mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+
+                            } catch (ApiException e) {
+                                switch (e.getStatusCode()) {
+                                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                        try {
+                                            ResolvableApiException resolvableApiException = (ResolvableApiException) e;
+                                            resolvableApiException.startResolutionForResult((Activity) context, 2);
+                                        } catch (IntentSender.SendIntentException ex) {
+                                            ex.printStackTrace();
+                                        }
+                                        break;
+
+                                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                        break;
+                                }
+                            }
+                        }
+                    });
+
+                } else {
+                    Toast.makeText(context, "Gps is turned off", Toast.LENGTH_SHORT).show();
+                }
+            }
+        };
+
+        registerReceiver(broadcastReceiver, new IntentFilter(LocationManager.MODE_CHANGED_ACTION));
+
 
         //FindID's:
         findID();
+
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -184,6 +288,27 @@ public class CameraActivity extends BaseClass {
         countDown();
 
         sqLiteModel = new SQLiteModel(CameraActivity.this);
+
+    }
+
+    private boolean isOnline(Context context) {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo netInfo = cm.getActiveNetworkInfo();
+            //should check null because in airplane mode it will be null
+            return (netInfo != null && netInfo.isConnected());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void locationHandle() {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(CameraActivity.this);
+        locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(1000);
+        locationRequest.setFastestInterval(50 / 2);
     }
 
     private void setOnClick() {
@@ -203,6 +328,19 @@ public class CameraActivity extends BaseClass {
             }
         });
 
+        latitudeTV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startLocation();
+            }
+        });
+        longitudeTV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startLocation();
+            }
+        });
+
         //Recording Button Handle:
         mRecordImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -218,8 +356,8 @@ public class CameraActivity extends BaseClass {
                                         stopRecord();
                                     } catch (RuntimeException e) {
                                         Toast.makeText(CameraActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
-                                        Log.e("STOP_RECORD_ERROR",e.getMessage());
-                                        Log.e("STOP_RECORD_ERROR",e.toString());
+                                        Log.e("STOP_RECORD_ERROR", e.getMessage());
+                                        Log.e("STOP_RECORD_ERROR", e.toString());
                                     }
                                     startPreview();
                                 }
@@ -282,9 +420,9 @@ public class CameraActivity extends BaseClass {
                                             Facility = FacilitySpinner.getSelectedItemPosition();
 
 //                                            int ComponentID = Component_List.get(Component).getCompId();
-                                         //   String ComponentName = Component_List.get(Component).getCompName();
+                                            //   String ComponentName = Component_List.get(Component).getCompName();
 //                                            int FacilityID = Facility_List.get(Facility).getFacID();
-                                           // String FacilityName = Facility_List.get(Facility).getFacName();
+                                            // String FacilityName = Facility_List.get(Facility).getFacName();
 
 
                                             SiteLocation = siteLocation.getText().toString();
@@ -393,6 +531,8 @@ public class CameraActivity extends BaseClass {
             if (isSurfaceAvailable == true) {
                 connectCamera();
                 startBluetooth();
+
+                startLocation();
             }
         }
 
@@ -412,6 +552,90 @@ public class CameraActivity extends BaseClass {
         }
     };
 
+    private void startLocation() {
+        if (checkLocationPermission()) {
+            if (isOnline(getApplicationContext())) {
+                turnOnGPS();
+            } else {
+                Toast.makeText(this, "Need Internet Connection", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+        }
+    }
+
+
+    private boolean checkLocationPermission() {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean isGPSEnabled() {
+        if (isOnline(getApplicationContext())) {
+            LocationManager locationManager = null;
+            boolean isEnabled = false;
+            if (locationManager == null) {
+                locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            }
+            isEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            return isEnabled;
+        } else {
+            Toast.makeText(this, "Need Internet Connection", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+    }
+
+    private void turnOnGPS() {
+        locationHandle();
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true);
+
+        Task<LocationSettingsResponse> result = LocationServices.getSettingsClient(this)
+                .checkLocationSettings(builder.build());
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @SuppressLint("MissingPermission")
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                try {
+                    LocationSettingsResponse response = task.getResult(ApiException.class);
+                    LocationCallback locationCallback = new LocationCallback() {
+                        @Override
+                        public void onLocationResult(LocationResult locationResult) {
+                            if (locationResult != null) {
+                                for (Location location : locationResult.getLocations()) {
+                                    latitudeTV.setText("LAT-" + String.valueOf(location.getLatitude()));
+                                    longitudeTV.setText("LONG-" + String.valueOf(location.getLongitude()));
+                                }
+                            } else {
+                                Log.e("TurnOnGps", "LocationCallbackCatch");
+                            }
+                        }
+                    };
+                    mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+                } catch (ApiException e) {
+                    switch (e.getStatusCode()) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            try {
+                                ResolvableApiException resolvableApiException = (ResolvableApiException) e;
+                                resolvableApiException.startResolutionForResult((Activity) CameraActivity.this, 2);
+                            } catch (IntentSender.SendIntentException ex) {
+                                ex.printStackTrace();
+                            }
+                            break;
+
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            break;
+                    }
+                }
+            }
+        });
+
+    }
+
     private void startBluetooth() {
         checkBluetoothIsOn();
     }
@@ -420,10 +644,11 @@ public class CameraActivity extends BaseClass {
     private void checkBluetoothIsOn() {
         if (!bluetoothAdapter.isEnabled()) {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, 100);
+            startActivityForResult(intent, 999);
         } else {
             bluetoothData();
         }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -446,7 +671,7 @@ public class CameraActivity extends BaseClass {
             builder.setTitle("Choose Bluetooth Device");
             builder.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int item) {
-                    ClientDevice clientDevice=new ClientDevice(paired_device_array[item]);
+                    ClientDevice clientDevice = new ClientDevice(paired_device_array[item]);
                     clientDevice.start();
                 }
             });
@@ -455,14 +680,47 @@ public class CameraActivity extends BaseClass {
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100 && resultCode == RESULT_OK) {
+        if (requestCode == 999 && resultCode == RESULT_OK) {
             Toast.makeText(CameraActivity.this, "Bluetooth is Turned on", Toast.LENGTH_SHORT).show();
             bluetoothData();
+        }
+        if (requestCode == 2 && resultCode == RESULT_OK) {
+
         } else {
-            Toast.makeText(CameraActivity.this, "You need to Turn on Bluetooth", Toast.LENGTH_SHORT).show();
+            mFusedLocationClient = LocationServices.getFusedLocationProviderClient(CameraActivity.this);
+            mFusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null) {
+                                latitudeTV.setText("LAT-"+String.valueOf(location.getLatitude()));
+                                longitudeTV.setText("LONG-"+String.valueOf(location.getLongitude()));
+                            }else
+                            {
+                                latitudeTV.setText("LAT-"+"Null");
+                                longitudeTV.setText("LONG-"+"Null");
+                            }
+                        }
+                    });
+
+//            LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
+//            List<String> providers = locationManager.getProviders(true);
+//            Location bestLocation = null;
+//            for (String provider : providers) {
+//                Location l = locationManager.getLastKnownLocation(provider);
+//                if (l == null) {
+//                    continue;
+//                }
+//                if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+//                    latitudeTV.setText("LAT-" + String.valueOf(bestLocation.getLatitude()));
+//                    longitudeTV.setText("LONG-" + String.valueOf(bestLocation.getLongitude()));
+//                }
+//            }
         }
     }
 
@@ -524,6 +782,7 @@ public class CameraActivity extends BaseClass {
             return Long.signum((long) size.getWidth() * size.getHeight() /
                     (long) t1.getWidth() * t1.getHeight());
         }
+
     }
 
     boolean flashStatus = false;
@@ -614,6 +873,9 @@ public class CameraActivity extends BaseClass {
                 MinMaxAvgList.clear();
                 TimeArrayList.clear();
 
+                LatitudeList.clear();
+                LongitudeList.clear();
+
                 mIsRecording = false;
                 //countDownTimer.start();
                 recordingTimeTV.setText("00:00:00");
@@ -632,19 +894,16 @@ public class CameraActivity extends BaseClass {
     }
 
     private void createJSON() throws IOException {
-        System.out.println("MinMaxSize : "+MinMaxAvgList.size());
-        for (int i=0;i<MinMaxAvgList.size();i++)
-        {
-            System.out.println("MinMax : "+i+" : "+MinMaxAvgList.get(i));
+        System.out.println("MinMaxSize : " + MinMaxAvgList.size());
+        for (int i = 0; i < MinMaxAvgList.size(); i++) {
+            System.out.println("MinMax : " + i + " : " + MinMaxAvgList.get(i));
         }
 
 
-        System.out.println("TimeArrayList : "+TimeArrayList.size());
-        for (int i=0;i<TimeArrayList.size();i++)
-        {
-            System.out.println("TimeArray : "+i+" : "+TimeArrayList.get(i));
+        System.out.println("TimeArrayList : " + TimeArrayList.size());
+        for (int i = 0; i < TimeArrayList.size(); i++) {
+            System.out.println("TimeArray : " + i + " : " + TimeArrayList.get(i));
         }
-
 
 
         float Min = MinMaxAvgList.get(0);
@@ -666,7 +925,6 @@ public class CameraActivity extends BaseClass {
             Total = Total + MinMaxAvgList.get(i);
         }
         float Average = Total / MinMaxAvgList.size();
-
 
         try {
             // Create a new instance of a JSONObject
@@ -709,15 +967,15 @@ public class CameraActivity extends BaseClass {
                 text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LON + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',";
+                        "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',";
 
             } else {
                 text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
                         "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LAT + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LON + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'";
+                        "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'";
             }
         }
         System.out.println(text);
@@ -777,6 +1035,8 @@ public class CameraActivity extends BaseClass {
 
         TimeArrayList = new ArrayList<>();
         MinMaxAvgList = new ArrayList<>();
+        LatitudeList = new ArrayList<>();
+        LongitudeList = new ArrayList<>();
 
         if (mTextureView.isAvailable()) {
             setUpCamera(mTextureView.getWidth(), mTextureView.getHeight());
@@ -788,7 +1048,7 @@ public class CameraActivity extends BaseClass {
         }
 
 
-       //countDownTimer.start();
+        //countDownTimer.start();
     }
 
 
@@ -816,6 +1076,8 @@ public class CameraActivity extends BaseClass {
 
                 if (mIsRecording) {
                     TimeArrayList.add(formattedTime1);
+                    LatitudeList.add(latitudeTV.getText().toString());
+                    LongitudeList.add(longitudeTV.getText().toString());
                 }
                 handler.postDelayed(runnable, 1000);
             }
@@ -826,22 +1088,23 @@ public class CameraActivity extends BaseClass {
 
     //This countDown Function used for Bluetooth Data:
     private void countDown() {
-         bluetoothHandler = new Handler();
-         bluetoothRunnable = new Runnable() {
+        bluetoothHandler = new Handler();
+        bluetoothRunnable = new Runnable() {
             @Override
             public void run() {
                 bluetoothCount.setText(String.valueOf(BluetoothText));
                 if (mIsRecording) {
                     MinMaxAvgList.add(Float.valueOf(bluetoothCount.getText().toString()));
                 }
-               bluetoothHandler.postDelayed(bluetoothRunnable,1000);
+                bluetoothHandler.postDelayed(bluetoothRunnable, 1000);
             }
         };
         bluetoothHandler.post(bluetoothRunnable);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT_ABOVE11) {
@@ -877,24 +1140,30 @@ public class CameraActivity extends BaseClass {
                 }
             }
         }
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                turnOnGPS();
+            } else {
+                Toast.makeText(this, "REQUEST_LOCATION_PERMISSION", Toast.LENGTH_SHORT).show();
+
+            }
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-       try {
-           sendReceieve.cancel();
-       }catch (Exception e)
-       {
+        try {
+            sendReceieve.cancel();
+        } catch (Exception e) {
 
-       }
+        }
         //We will Stop VideoRecording when this lifecycle will appear.
         //so all components will stop like countdown, if recording is on then stop recording.
 
         //countDownTimer.cancel();
         stopBackgroundThread();
-
 
         //Stop Recording if On
         if (mIsRecording == true) {
@@ -989,6 +1258,7 @@ public class CameraActivity extends BaseClass {
         CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
             cameraManager.openCamera(mCameraId, mCameraDeviceStateCallback, mBackgroundHandler);
+
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -1038,6 +1308,7 @@ public class CameraActivity extends BaseClass {
         }
 
         mRecordImageButton.setImageResource(R.drawable.record_resumed);
+
 
         SurfaceTexture surfaceTexture = mTextureView.getSurfaceTexture();
 
@@ -1183,7 +1454,8 @@ public class CameraActivity extends BaseClass {
         }
     }
 
-    private static int sensorToDeviceOrientation(CameraCharacteristics cameraCharacteristics, int deviceOrientation) {
+    private static int sensorToDeviceOrientation(CameraCharacteristics
+                                                         cameraCharacteristics, int deviceOrientation) {
         int sensorOrientation = cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         deviceOrientation = ORIENTATIONS.get(deviceOrientation);
         return (sensorOrientation + deviceOrientation * 1 + 360) % 360;
@@ -1271,8 +1543,7 @@ public class CameraActivity extends BaseClass {
         //STEP 2: Video Recording Surface Send as VideoSource:
         try {
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        }catch (Exception e)
-        {
+        } catch (Exception e) {
 
         }
 
@@ -1321,6 +1592,11 @@ public class CameraActivity extends BaseClass {
         } else {
             super.onBackPressed();
         }
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(broadcastReceiver);
     }
 }
