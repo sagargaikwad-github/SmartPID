@@ -40,15 +40,12 @@ public class BaseClass extends AppCompatActivity {
 
     String BluetoothText="0";
 
-
-
     @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         bluetoothAdapter=BluetoothAdapter.getDefaultAdapter();
-
 
     }
 

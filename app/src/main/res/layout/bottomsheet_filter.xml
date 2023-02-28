@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/filter_toolbar_layput"
+            android:layout_width="match_parent"
+            app:title="Select Filters"
+            app:titleTextColor="@color/text_white"
+            android:background="@color/primary_color"
+            android:layout_height="?attr/actionBarSize"></androidx.appcompat.widget.Toolbar>
+
+
+<!--    <LinearLayout-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:layout_below="@+id/view_line"-->
+<!--        android:background="@color/file_bg_color"-->
+<!--        android:orientation="vertical">-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:background="@color/text_black"></View>-->
+
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:text="Component"-->
+<!--            android:layout_marginStart="5dp"-->
+<!--            android:textColor="@color/text_black"-->
+<!--            android:textSize="22sp"></TextView>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:background="@color/text_black"></View>-->
+
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:layout_marginStart="5dp"-->
+<!--            android:text="Facility"-->
+<!--            android:textColor="@color/text_black"-->
+<!--            android:textSize="22sp"></TextView>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:background="@color/text_black"></View>-->
+
+<!--    </LinearLayout>-->
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/bottomSheet_filer_rv_MainComponents"
+        android:layout_width="wrap_content"
+        android:layout_below="@id/filter_toolbar_layput"
+        android:background="@color/file_bg_color"
+        android:layout_above="@+id/savecancel_ll"
+        android:layout_height="match_parent">
+    </androidx.recyclerview.widget.RecyclerView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/bottomSheet_filer_rv_data_Components"
+        android:layout_width="match_parent"
+        android:layout_below="@id/filter_toolbar_layput"
+        android:layout_above="@+id/savecancel_ll"
+        android:layout_toRightOf="@id/bottomSheet_filer_rv_MainComponents"
+        android:layout_height="match_parent">
+    </androidx.recyclerview.widget.RecyclerView>
+
+    <LinearLayout
+        android:id="@+id/savecancel_ll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:weightSum="2"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/bottomsheet_filter_Cancel_btn"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="5dp"
+            android:text="Cancel"
+            android:textColor="@color/text_black"
+            android:backgroundTint="@color/text_white"
+            android:layout_height="wrap_content">
+        </Button>
+        <Button
+            android:id="@+id/bottomsheet_filter_apply_btn"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Apply"
+            android:textColor="@color/text_white">
+        </Button>
+    </LinearLayout>
+</RelativeLayout>

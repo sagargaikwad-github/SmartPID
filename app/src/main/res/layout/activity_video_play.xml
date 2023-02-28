@@ -6,13 +6,29 @@
     android:layout_height="match_parent"
     tools:context=".VideoPlayActivity">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/videoPlayer_Toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"></com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+
     <VideoView
         android:id="@+id/videoPlayer_videoView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></VideoView>
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout"></VideoView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

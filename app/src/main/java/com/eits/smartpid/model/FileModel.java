@@ -3,8 +3,8 @@ package com.eits.smartpid.model;
 public class FileModel {
     String fileName;
     String fileDateTime;
-    String compID;
-    String  facID;
+    int compID;
+    int  facID;
     String fileSiteLocation;
     String fileMin;
     String fileMax;
@@ -14,7 +14,7 @@ public class FileModel {
     String fileNote;
 
 
-    public FileModel(String fileName, String fileDateTime, String compID, String facID, String fileSiteLocation, String fileMin, String fileMax, String fileAverage, String filePath, String fileDuration, String fileNote) {
+    public FileModel(String fileName, String fileDateTime, int compID, int facID, String fileSiteLocation, String fileMin, String fileMax, String fileAverage, String filePath, String fileDuration, String fileNote) {
         this.fileName = fileName;
         this.fileDateTime = fileDateTime;
         this.compID = compID;
@@ -44,19 +44,19 @@ public class FileModel {
         this.fileDateTime = fileDateTime;
     }
 
-    public String getCompID() {
+    public int getCompID() {
         return compID;
     }
 
-    public void setCompID(String compID) {
+    public void setCompID(int compID) {
         this.compID = compID;
     }
 
-    public String getFacID() {
+    public int getFacID() {
         return facID;
     }
 
-    public void setFacID(String facID) {
+    public void setFacID(int facID) {
         this.facID = facID;
     }
 

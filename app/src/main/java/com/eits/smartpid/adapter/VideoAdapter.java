@@ -6,9 +6,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,7 +23,10 @@ import com.bumptech.glide.Glide;
 import com.eits.smartpid.Interface.FileDelete;
 import com.eits.smartpid.R;
 import com.eits.smartpid.VideoPlayActivity;
+import com.eits.smartpid.model.ComponentModel;
+import com.eits.smartpid.model.FacilityModel;
 import com.eits.smartpid.model.FileModel;
+import com.eits.smartpid.model.SQLiteModel;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,10 +36,19 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.holder> {
     ArrayList<FileModel> arrayList;
     FileDelete fileDelete;
 
+    String videoPath;
+    SQLiteModel sqLiteModel;
+
+    int CompID;
+    int FacID;
+    int MyReturn;
+
+
     public VideoAdapter(Context context, ArrayList<FileModel> arrayList, FileDelete fileDelete) {
         this.context = context;
         this.arrayList = arrayList;
         this.fileDelete = fileDelete;
+
     }
 
     @NonNull
@@ -48,18 +62,29 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.holder> {
     @Override
     public void onBindViewHolder(@NonNull holder holder, @SuppressLint("RecyclerView") int position) {
 
+        sqLiteModel = new SQLiteModel(context);
+        ArrayList<ComponentModel> comp_list = new ArrayList<>();
+        comp_list = sqLiteModel.getComponentList();
+
+        ArrayList<FacilityModel> facility_list = new ArrayList<>();
+        facility_list = sqLiteModel.getFacilityList();
+
+        CompID = arrayList.get(position).getCompID();
+        FacID = arrayList.get(position).getFacID();
+
         String filename = "<b>" + arrayList.get(position).getFileName() + "</b>";
         String datetime = "Date & Time : " + "<b>" + arrayList.get(position).getFileDateTime() + "</b>";
-        String component = "Component : " + "<b>" + arrayList.get(position).getCompID() + "</b>";
+        String component = "Component : " + "<b>" + sqLiteModel.getComponentName(CompID) + "</b>";
         String location = "Location : " + "<b>" + arrayList.get(position).getFileSiteLocation() + "</b>";
-        String facility = "Facility : " + "<b>" + arrayList.get(position).getFacID() + "</b>";
+        String facility = "Facility : " + "<b>" + sqLiteModel.getFacilityName(FacID) + "</b>";
         String duration = "Duration : " + "<b>" + arrayList.get(position).getFileDuration() + "</b>";
         String notes = "Notes : " + "<br>" + "<b>" + "    " + arrayList.get(position).getFileNote() + "</b>";
         String min = "Min : " + "<b>" + arrayList.get(position).getFileMin() + "</b>";
         String max = "Max : " + "<b>" + arrayList.get(position).getFileMax() + "</b>";
         String average = "Average : " + "<b>" + arrayList.get(position).getFileAverage() + "</b>";
 
-        String videoPath = arrayList.get(position).getFilePath();
+        videoPath = arrayList.get(position).getFilePath();
+
 
         holder.filename.setText(Html.fromHtml(filename));
         holder.dateTime.setText(Html.fromHtml(datetime));
@@ -72,15 +97,14 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.holder> {
         holder.max.setText(Html.fromHtml(max));
         holder.average.setText(Html.fromHtml(average));
 
-
-        //Loading Thumbnail of a Video:
         Glide.with(context).load(videoPath).into(holder.fileImage_iv);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String FilePath = arrayList.get(position).getFilePath();
                 Intent intent = new Intent(context, VideoPlayActivity.class);
-                intent.putExtra("VIDEO_LINK", videoPath);
+                intent.putExtra("VIDEO_LINK", FilePath);
                 context.startActivity(intent);
             }
         });
@@ -88,13 +112,18 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.holder> {
         holder.fileDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                String FilePath = arrayList.get(position).getFilePath();
                 AlertDialog.Builder alertdialog = new AlertDialog.Builder(context);
+
+                alertdialog.create().getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+
                 alertdialog.setMessage("Do you want to delete " + arrayList.get(position).getFileName() + " ?")
                         .setCancelable(false)
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
-                                File file = new File(videoPath);
+                                File file = new File(FilePath);
                                 file.delete();
                                 fileDelete.fileDeleted();
                                 notifyDataSetChanged();
@@ -107,9 +136,12 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.holder> {
                             }
                         })
                         .show();
+
             }
         });
+
     }
+
 
     @Override
     public int getItemCount() {
@@ -141,3 +173,4 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.holder> {
 
 
 }
+

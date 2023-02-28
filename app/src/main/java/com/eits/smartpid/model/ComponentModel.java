@@ -4,6 +4,7 @@ public class ComponentModel {
     int compId;
     String compName;
 
+
     public ComponentModel(int compId, String compName) {
         this.compId = compId;
         this.compName = compName;
@@ -24,4 +25,6 @@ public class ComponentModel {
     public void setCompName(String compName) {
         this.compName = compName;
     }
+
+
 }

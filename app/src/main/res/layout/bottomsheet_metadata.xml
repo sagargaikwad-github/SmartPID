@@ -74,17 +74,36 @@
            </com.google.android.material.textfield.TextInputEditText>
        </com.google.android.material.textfield.TextInputLayout>
 
-       <Button
-           android:id="@+id/bottomSheet_metadata_save_BTN"
-           android:layout_width="wrap_content"
-           android:text="Save"
-           android:padding="10dp"
-           android:layout_gravity="end"
-           android:gravity="center"
-           android:layout_marginEnd="32dp"
-           android:layout_marginTop="10dp"
-           android:textColor="@color/text_white"
-           android:layout_height="wrap_content"></Button>
+       <LinearLayout
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:gravity="end"
+           android:orientation="horizontal">
+           <Button
+               android:id="@+id/bottomSheet_metadata_cancel_BTN"
+               android:layout_width="wrap_content"
+               android:text="Cancel"
+               android:padding="10dp"
+               android:layout_gravity="end"
+               android:gravity="center"
+               android:backgroundTint="@color/text_white"
+               android:layout_marginEnd="12dp"
+               android:layout_marginTop="10dp"
+               android:textColor="@color/text_black"
+               android:layout_height="wrap_content"></Button>
+           <Button
+               android:id="@+id/bottomSheet_metadata_save_BTN"
+               android:layout_width="wrap_content"
+               android:text="Next"
+               android:padding="10dp"
+               android:layout_gravity="end"
+               android:gravity="center"
+               android:layout_marginEnd="32dp"
+               android:layout_marginTop="10dp"
+               android:textColor="@color/text_white"
+               android:layout_height="wrap_content"></Button>
+       </LinearLayout>
+
 
    </LinearLayout>
 

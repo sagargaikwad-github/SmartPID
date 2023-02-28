@@ -4,6 +4,7 @@ public class FacilityModel {
     int facID;
     String facName;
 
+
     public FacilityModel(int facID, String facName) {
         this.facID = facID;
         this.facName = facName;
@@ -25,5 +26,6 @@ public class FacilityModel {
     public void setFacName(String facName) {
         this.facName = facName;
     }
+
 
 }

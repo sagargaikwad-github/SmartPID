@@ -1,13 +1,12 @@
 package com.eits.smartpid.model;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.Nullable;
-
-import com.eits.smartpid.CameraActivity;
 
 import java.util.ArrayList;
 
@@ -89,4 +88,87 @@ public class SQLiteModel extends SQLiteOpenHelper {
         return arrayList;
     }
 
+    public ArrayList<String> getFacilityNames() {
+        ArrayList<String>arrayList=new ArrayList<>();
+
+        SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from Facility_TABLE", null);
+        if (cursor.moveToFirst()) {
+            do {
+                if(cursor.isFirst())
+                {
+
+                }else
+                {
+                    String facName = cursor.getString(1);
+                    arrayList.add(facName);
+                }
+
+
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return arrayList;
+
+    }
+
+    public ArrayList<String> getComponentNames() {
+        ArrayList<String>arrayList=new ArrayList<>();
+
+        SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from Component_TABLE", null);
+        if (cursor.moveToFirst()) {
+            do {
+               if(cursor.isFirst())
+               {
+
+               }else
+               {
+                   String compName = cursor.getString(1);
+                   arrayList.add(compName);
+               }
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return arrayList;
+    }
+
+
+
+
+
+
+    public String getComponentName(int compID) {
+
+        String compName=null;
+
+        SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select Comp_Name from Component_TABLE where Comp_ID=?", new String[]{String.valueOf(compID)});
+        if (cursor.moveToFirst()) {
+            do {
+                   compName = cursor.getString(0);
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return compName;
+    }
+
+    public String getFacilityName(int facID) {
+
+        String facName=null;
+
+        SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select Fac_Name from Facility_TABLE where Fac_ID=?", new String[]{String.valueOf(facID)});
+        if (cursor.moveToFirst()) {
+            do {
+                 facName = cursor.getString(0);
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return facName;
+    }
 }

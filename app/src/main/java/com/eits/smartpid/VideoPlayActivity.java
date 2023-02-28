@@ -1,18 +1,25 @@
 package com.eits.smartpid;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.viewpager.widget.ViewPager;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.MediaController;
+
 import android.widget.VideoView;
+
+import com.eits.smartpid.adapter.VideoAdapter;
 
 
 public class VideoPlayActivity extends BaseClass {
@@ -22,44 +29,65 @@ public class VideoPlayActivity extends BaseClass {
     int stopPosition = -1;
     Handler handler;
     Runnable runnable;
+    Toolbar videoPlayer_Toolbar;
 
+
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_video_play);
-
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        videoView=findViewById(R.id.videoPlayer_videoView);
+        // hideSystemUI();
 
-        Bundle getLink=getIntent().getExtras();
-        String Link=getLink.getString("VIDEO_LINK");
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_video_play);
 
-        Uri link= Uri.parse(Link);
+        videoView = findViewById(R.id.videoPlayer_videoView);
+        videoPlayer_Toolbar = findViewById(R.id.videoPlayer_Toolbar);
+
+        configureToolbar();
+
+        Bundle getLink = getIntent().getExtras();
+        String Link = getLink.getString("VIDEO_LINK");
+
+        Uri link = Uri.parse(Link);
 
         videoView.setVideoURI(link);
         videoView.start();
 
     }
+
+    private void configureToolbar() {
+        videoPlayer_Toolbar.setNavigationIcon(R.drawable.ic_back);
+        videoPlayer_Toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBackPressed();
+            }
+        });
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
 
         mediaController = new MediaController(this);
-        handler= new Handler();
-        runnable=new Runnable() {
-            @Override
-            public void run() {
-                videoView.setMediaController(mediaController);
-            }
-        };
-        handler.postDelayed(runnable,1000);
+//        handler = new Handler();
+//        runnable = new Runnable() {
+//            @Override
+//            public void run() {
+//                videoView.setMediaController(mediaController);
+//            }
+//        };
+//        handler.postDelayed(runnable, 1000);
 
+        videoView.setMediaController(mediaController);
 
         if (stopPosition != -1) {
             videoView.seekTo(stopPosition);
         }
+
 
         videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
@@ -77,6 +105,19 @@ public class VideoPlayActivity extends BaseClass {
                 return true;
             }
         });
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
 
     }
 
@@ -85,7 +126,7 @@ public class VideoPlayActivity extends BaseClass {
         super.onPause();
         stopPosition = videoView.getCurrentPosition();
 
-        handler.removeCallbacks(runnable);
+//        handler.removeCallbacks(runnable);
 
     }
 
@@ -93,6 +134,16 @@ public class VideoPlayActivity extends BaseClass {
     public void onBackPressed() {
         super.onBackPressed();
 
+    }
+
+    private void hideSystemUI() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
     }
 

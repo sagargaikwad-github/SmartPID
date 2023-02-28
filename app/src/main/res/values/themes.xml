@@ -7,6 +7,8 @@
         <item name="colorOnPrimary">@color/dark_color</item>
 
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+        <item name="colorSecondary">@color/primary_color</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>

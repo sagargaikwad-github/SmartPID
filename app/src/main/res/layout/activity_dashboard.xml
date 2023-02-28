@@ -31,6 +31,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -38,20 +39,69 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:text="Sort By : "
-                    android:layout_marginStart="20dp"
                     android:textColor="@color/text_black"
                     android:textSize="16sp" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/dashboard_sortBy_RV"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"></androidx.recyclerview.widget.RecyclerView>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/filer_Search"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:background="@drawable/filer_background"
+                        android:drawableEnd="@drawable/ic_filter_off"
+                        android:drawablePadding="6dp"
+                        android:padding="5dp"
+                        android:text="Filter"
+                        android:textColor="@color/text_black"
+                        android:textSize="16sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"></TextView>
+
+                    <TextView
+                        android:id="@+id/filter_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#FF1100"
+                        android:padding="4dp"
+                        android:text="22"
+                        android:visibility="gone"
+                        android:textColor="@color/text_white"
+                        android:textSize="8sp"
+                        app:layout_constraintBottom_toTopOf="@+id/filer_Search"
+                        app:layout_constraintEnd_toEndOf="@+id/filer_Search"
+                        app:layout_constraintTop_toTopOf="@+id/filer_Search"></TextView>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/dashboard_fileDisplay_RV"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"></androidx.recyclerview.widget.RecyclerView>
+            <TextView
+                android:id="@+id/nothingToShow"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textSize="22sp"
+                android:textColor="@color/text_black"
+                android:text="Nothing to Show"></TextView>
         </LinearLayout>
 
 <!--        <Button-->
