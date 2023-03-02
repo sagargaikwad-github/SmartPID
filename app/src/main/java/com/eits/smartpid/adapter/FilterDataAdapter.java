@@ -131,6 +131,7 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                     }
                 }
             }
+
         });
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
