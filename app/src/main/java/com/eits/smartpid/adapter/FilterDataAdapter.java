@@ -1,24 +1,20 @@
-package com.eits.smartpid;
+package com.eits.smartpid.adapter;
 
-import static com.eits.smartpid.DashboardActivity.apply_filter_list;
 
-import static com.eits.smartpid.DashboardActivity.filteredList_Dashboard;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.eits.smartpid.Interface.FilterList_Interface;
+import com.eits.smartpid.R;
 import com.eits.smartpid.model.ComponentModel;
 import com.eits.smartpid.model.FacilityModel;
 import com.eits.smartpid.model.SQLiteModel;
@@ -33,14 +29,16 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
     ArrayList<ComponentModel> ComponentLIST;
     ArrayList<FacilityModel> FacilityLIST;
     FilterList_Interface filterListInterfaceInterface;
+    ArrayList<Integer> filteredList_Dashboard = new ArrayList<>();
+    ArrayList<Integer> dashboard_list = new ArrayList<>();
 
 
-    public FilterDataAdapter(ArrayList<String> arrayList, Context context, String titleName, FilterList_Interface filterListInterfaceInterface) {
+    public FilterDataAdapter(ArrayList<String> arrayList, Context context, String titleName, FilterList_Interface filterListInterfaceInterface, ArrayList<Integer> dashBoardList) {
         this.arrayList = arrayList;
         this.context = context;
         TitleName = titleName;
         this.filterListInterfaceInterface = filterListInterfaceInterface;
-
+        this.filteredList_Dashboard=dashBoardList;
     }
 
     @NonNull
@@ -49,7 +47,6 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.bottomsheet_filter_data_item, parent, false);
         return new holder(view);
-
     }
 
     @Override
@@ -62,48 +59,19 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
         FacilityLIST = sqLiteModel.getFacilityList();
 
 
-//        if(TitleName.equals("Component"))
-//        {
-//            int getFilter = ComponentLIST.get(position + 1).getCompFilter();
-//            if (getFilter == 1) {
-//                holder.checkBox.setChecked(true);
-//            } else {
-//
-//            }
-//        }else
-//        {
-//            int getFilter = FacilityLIST.get(position + 1).getFacFilter();
-//            if (getFilter == 1) {
-//                holder.checkBox.setChecked(true);
-//            } else {
-//
-//            }
-//        }
-
-
-
         if (TitleName.equals("Component")) {
             int component = position + 1;
             int componentNUM = ComponentLIST.get(component).getCompId();
             if (filteredList_Dashboard.contains(componentNUM)) {
                 holder.checkBox.setChecked(true);
-
-
-
-//                int num = position + 1;
-//                int MyNum = ComponentLIST.get(num).getCompId();
-//
-//                filteredList_Dashboard.add(MyNum);
             }
         }
 
         if (TitleName.equals("Facility")) {
             int facility = position + 1;
             int facilityNUM = FacilityLIST.get(facility).getFacID();
-
             if (filteredList_Dashboard.contains(facilityNUM)) {
                 holder.checkBox.setChecked(true);
-
 
 //                int num = position + 1;
 //                int MyNum = FacilityLIST.get(num).getFacID();
@@ -112,7 +80,6 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
 
             }
         }
-
 
         holder.checkBox.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -123,37 +90,22 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                     int num = position + 1;
                     int MyNum = ComponentLIST.get(num).getCompId();
 
-
-                    if (!filteredList_Dashboard.contains(MyNum))
-                    {
-                        //filterList.add(MyNum);
-                        //filterListInterfaceInterface.filterList(filterList);
+                    if (!filteredList_Dashboard.contains(MyNum)) {
                         filteredList_Dashboard.add(MyNum);
                         holder.checkBox.setChecked(true);
-                        //  filterListInterfaceInterface.filterList(filteredList_Dashboard);
-
+                        filterListInterfaceInterface.filterList(filteredList_Dashboard);
 
                     } else {
-                        //filterList.remove(MyNum);
-                        // filterListInterfaceInterface.filterList(filterList);
-
                         for (int i = 0; i < filteredList_Dashboard.size(); i++) {
                             if (MyNum == filteredList_Dashboard.get(i)) {
                                 filteredList_Dashboard.remove(i);
                                 holder.checkBox.setChecked(false);
-                                // filterListInterfaceInterface.filterList(filteredList_Dashboard);
+                                filterListInterfaceInterface.filterList(filteredList_Dashboard);
                             }
                         }
 
                     }
-//                    Boolean isAlreadyInFilterList = sqLiteModel.checkFilteredListOrNotComponent(MyNum);
-//                    if (isAlreadyInFilterList) {
-//                        sqLiteModel.removeInComponentFilter(MyNum);
-//                        Toast.makeText(context, "removed Component", Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        sqLiteModel.addInComponentFilter(MyNum);
-//                        Toast.makeText(context, "Added Component", Toast.LENGTH_SHORT).show();
-//                    }
+
                 }
                 if (TitleName.equals("Facility")) {
 
@@ -163,79 +115,44 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                     int MyNum = FacilityLIST.get(num).getFacID();
 
                     if (!filteredList_Dashboard.contains(MyNum)) {
-//                        filterList.add(MyNum);
-//                        filterListInterfaceInterface.filterList(filterList);
-
                         filteredList_Dashboard.add(MyNum);
                         holder.checkBox.setChecked(true);
-
+                        filterListInterfaceInterface.filterList(filteredList_Dashboard);
                     } else {
-//                        filterList.remove(MyNum);
-//                        filterListInterfaceInterface.filterList(filterList);
 
                         for (int i = 0; i < filteredList_Dashboard.size(); i++) {
                             if (MyNum == filteredList_Dashboard.get(i)) {
                                 filteredList_Dashboard.remove(i);
                                 holder.checkBox.setChecked(false);
+                                filterListInterfaceInterface.filterList(filteredList_Dashboard);
                             }
                         }
 
                     }
-
-//                    Boolean isAlreadyInFilterList = sqLiteModel.checkFilteredListOrNotFacility(MyNum);
-//                    if (isAlreadyInFilterList) {
-//                        sqLiteModel.removeInFacilityFilter(MyNum);
-//                        Toast.makeText(context, "removed Facility", Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        sqLiteModel.addInFacilityFilter(MyNum);
-//                        Toast.makeText(context, "Added Facility", Toast.LENGTH_SHORT).show();
-//                    }
                 }
             }
         });
-
-
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (TitleName.equals("Component")) {
-
-                    // ComponentLIST = sqLiteModel.getComponentList();
                     int num = position + 1;
                     int MyNum = ComponentLIST.get(num).getCompId();
 
-
-                    if (!filteredList_Dashboard.contains(MyNum))
-                    {
-                        //filterList.add(MyNum);
-                        //filterListInterfaceInterface.filterList(filterList);
+                    if (!filteredList_Dashboard.contains(MyNum)) {
                         filteredList_Dashboard.add(MyNum);
                         holder.checkBox.setChecked(true);
-                        //  filterListInterfaceInterface.filterList(filteredList_Dashboard);
-
-
+                        filterListInterfaceInterface.filterList(filteredList_Dashboard);
                     } else {
-                        //filterList.remove(MyNum);
-                        // filterListInterfaceInterface.filterList(filterList);
-
                         for (int i = 0; i < filteredList_Dashboard.size(); i++) {
                             if (MyNum == filteredList_Dashboard.get(i)) {
                                 filteredList_Dashboard.remove(i);
                                 holder.checkBox.setChecked(false);
-                                // filterListInterfaceInterface.filterList(filteredList_Dashboard);
+                                filterListInterfaceInterface.filterList(filteredList_Dashboard);
                             }
                         }
-
                     }
-//                    Boolean isAlreadyInFilterList = sqLiteModel.checkFilteredListOrNotComponent(MyNum);
-//                    if (isAlreadyInFilterList) {
-//                        sqLiteModel.removeInComponentFilter(MyNum);
-//                        Toast.makeText(context, "removed Component", Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        sqLiteModel.addInComponentFilter(MyNum);
-//                        Toast.makeText(context, "Added Component", Toast.LENGTH_SHORT).show();
-//                    }
                 }
                 if (TitleName.equals("Facility")) {
 
@@ -245,33 +162,20 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                     int MyNum = FacilityLIST.get(num).getFacID();
 
                     if (!filteredList_Dashboard.contains(MyNum)) {
-//                        filterList.add(MyNum);
-//                        filterListInterfaceInterface.filterList(filterList);
-
                         filteredList_Dashboard.add(MyNum);
                         holder.checkBox.setChecked(true);
+                        filterListInterfaceInterface.filterList(filteredList_Dashboard);
 
                     } else {
-//                        filterList.remove(MyNum);
-//                        filterListInterfaceInterface.filterList(filterList);
-
                         for (int i = 0; i < filteredList_Dashboard.size(); i++) {
                             if (MyNum == filteredList_Dashboard.get(i)) {
                                 filteredList_Dashboard.remove(i);
                                 holder.checkBox.setChecked(false);
+                                filterListInterfaceInterface.filterList(filteredList_Dashboard);
                             }
                         }
 
                     }
-
-//                    Boolean isAlreadyInFilterList = sqLiteModel.checkFilteredListOrNotFacility(MyNum);
-//                    if (isAlreadyInFilterList) {
-//                        sqLiteModel.removeInFacilityFilter(MyNum);
-//                        Toast.makeText(context, "removed Facility", Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        sqLiteModel.addInFacilityFilter(MyNum);
-//                        Toast.makeText(context, "Added Facility", Toast.LENGTH_SHORT).show();
-//                    }
                 }
 
             }

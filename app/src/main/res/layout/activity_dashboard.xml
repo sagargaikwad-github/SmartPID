@@ -56,17 +56,43 @@
                     android:layout_height="wrap_content">
 
                     <TextView
+                        android:id="@+id/filter_clear"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/filer_background"
+                        android:drawableStart="@drawable/ic_clear_filter"
+                        android:text="Clear Filter"
+                        android:textColor="@color/text_black"
+                        android:textSize="15sp"
+                        android:padding="2dp"
+                        android:gravity="center"
+                        android:paddingEnd="5dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"></TextView>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_height="wrap_content">
+
+                    <TextView
                         android:id="@+id/filer_Search"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:background="@drawable/filer_background"
-                        android:drawableEnd="@drawable/ic_filter_off"
-                        android:drawablePadding="6dp"
-                        android:padding="5dp"
+                        android:drawableEnd="@drawable/ic_filter_on"
+                        android:padding="2dp"
+                        android:paddingStart="5dp"
                         android:text="Filter"
                         android:textColor="@color/text_black"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
+                        android:gravity="center"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
@@ -77,12 +103,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="#FF1100"
-                        android:padding="4dp"
-                        android:text="22"
-                        android:visibility="gone"
+                        android:padding="2dp"
                         android:textColor="@color/text_white"
-                        android:textSize="8sp"
-                        app:layout_constraintBottom_toTopOf="@+id/filer_Search"
+                        android:textSize="1sp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:visibility="gone"
                         app:layout_constraintEnd_toEndOf="@+id/filer_Search"
                         app:layout_constraintTop_toTopOf="@+id/filer_Search"></TextView>
                 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,12 +3,12 @@ package com.eits.smartpid.model;
 public class FacilityModel {
     int facID;
     String facName;
+    int facFilter;
 
-
-    public FacilityModel(int facID, String facName) {
+    public FacilityModel(int facID, String facName, int facFilter) {
         this.facID = facID;
         this.facName = facName;
-
+        this.facFilter = facFilter;
     }
 
     public int getFacID() {
@@ -27,5 +27,11 @@ public class FacilityModel {
         this.facName = facName;
     }
 
+    public int getFacFilter() {
+        return facFilter;
+    }
 
+    public void setFacFilter(int facFilter) {
+        this.facFilter = facFilter;
+    }
 }

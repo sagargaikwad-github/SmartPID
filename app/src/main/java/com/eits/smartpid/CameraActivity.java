@@ -208,6 +208,11 @@ public class CameraActivity extends BaseClass {
         //Permissions for Camera:
         checkCameraPermissions();
 
+        sqLiteModel=new SQLiteModel(this);
+
+        sqLiteModel.clearCompFilter();
+        sqLiteModel.clearFacFilter();
+
         broadcastReceiver = new BroadcastReceiver() {
             @SuppressLint("MissingPermission")
             @Override

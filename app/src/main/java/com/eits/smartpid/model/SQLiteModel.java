@@ -23,33 +23,32 @@ public class SQLiteModel extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        String facility_table="create table Facility_TABLE(Fac_ID int primary key,Fac_Name text)";
-        String component_table="create table Component_TABLE(Comp_ID int primary key,Comp_Name text)";
+        String facility_table="create table Facility_TABLE(Fac_ID int primary key,Fac_Name text,Fac_Filter int)";
+        String component_table="create table Component_TABLE(Comp_ID int primary key,Comp_Name text,Comp_Filter int)";
 
         sqLiteDatabase.execSQL(facility_table);
         sqLiteDatabase.execSQL(component_table);
 
-        sqLiteDatabase.execSQL("insert into Facility_TABLE values(100,'Select Facility')");
-        sqLiteDatabase.execSQL("insert into Facility_TABLE values(101,'First')");
-        sqLiteDatabase.execSQL("insert into Facility_TABLE values(102,'Second')");
-        sqLiteDatabase.execSQL("insert into Facility_TABLE values(103,'Third')");
-        sqLiteDatabase.execSQL("insert into Facility_TABLE values(104,'Fourth')");
-        sqLiteDatabase.execSQL("insert into Facility_TABLE values(105,'Fifth')");
+        sqLiteDatabase.execSQL("insert into Facility_TABLE values(100,'Select Facility',0)");
+        sqLiteDatabase.execSQL("insert into Facility_TABLE values(101,'First',0)");
+        sqLiteDatabase.execSQL("insert into Facility_TABLE values(102,'Second',0)");
+        sqLiteDatabase.execSQL("insert into Facility_TABLE values(103,'Third',0)");
+        sqLiteDatabase.execSQL("insert into Facility_TABLE values(104,'Fourth',0)");
+        sqLiteDatabase.execSQL("insert into Facility_TABLE values(105,'Fifth',0)");
 
-        sqLiteDatabase.execSQL("insert into Component_TABLE values(200,'Select Component')");
-        sqLiteDatabase.execSQL("insert into Component_TABLE values(201,'Flange')");
-        sqLiteDatabase.execSQL("insert into Component_TABLE values(202,'Valve')");
-        sqLiteDatabase.execSQL("insert into Component_TABLE values(203,'Valve-Check')");
-        sqLiteDatabase.execSQL("insert into Component_TABLE values(204,'Pump')");
-        sqLiteDatabase.execSQL("insert into Component_TABLE values(205,'Compressor')");
-        sqLiteDatabase.execSQL("insert into Component_TABLE values(206,'Valve-T')");
+        sqLiteDatabase.execSQL("insert into Component_TABLE values(200,'Select Component',0)");
+        sqLiteDatabase.execSQL("insert into Component_TABLE values(201,'Flange',0)");
+        sqLiteDatabase.execSQL("insert into Component_TABLE values(202,'Valve',0)");
+        sqLiteDatabase.execSQL("insert into Component_TABLE values(203,'Valve-Check',0)");
+        sqLiteDatabase.execSQL("insert into Component_TABLE values(204,'Pump',0)");
+        sqLiteDatabase.execSQL("insert into Component_TABLE values(205,'Compressor',0)");
+        sqLiteDatabase.execSQL("insert into Component_TABLE values(206,'Valve-T',0)");
 
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-
     }
 
     public ArrayList<ComponentModel> getComponentList() {
@@ -61,8 +60,9 @@ public class SQLiteModel extends SQLiteOpenHelper {
             do {
                 int compID = cursor.getInt(0);
                 String compName = cursor.getString(1);
+                int compFilter = cursor.getInt(2);
 
-                arrayList.add(new ComponentModel( compID, compName));
+                arrayList.add(new ComponentModel( compID, compName,compFilter));
             } while (cursor.moveToNext());
         } else {
 
@@ -79,8 +79,9 @@ public class SQLiteModel extends SQLiteOpenHelper {
             do {
                 int facID = cursor.getInt(0);
                 String facName = cursor.getString(1);
+                int facFilter = cursor.getInt(2);
 
-                arrayList.add(new FacilityModel(facID, facName));
+                arrayList.add(new FacilityModel(facID, facName,facFilter));
             } while (cursor.moveToNext());
         } else {
 
@@ -136,10 +137,6 @@ public class SQLiteModel extends SQLiteOpenHelper {
     }
 
 
-
-
-
-
     public String getComponentName(int compID) {
 
         String compName=null;
@@ -170,5 +167,65 @@ public class SQLiteModel extends SQLiteOpenHelper {
 
         }
         return facName;
+    }
+
+
+    public ArrayList<Integer> getCompFilterList() {
+        ArrayList<Integer> getList = new ArrayList<>();
+        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
+        String qry = "select * from Component_TABLE where Comp_Filter=1";
+        Cursor cursor = sqLiteDatabase.rawQuery(qry, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                int compID = cursor.getInt(0);
+                getList.add(compID);
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return getList;
+    }
+
+    public ArrayList<Integer> getFacFilterList() {
+        ArrayList<Integer> getList = new ArrayList<>();
+        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
+        String qry = "select * from Facility_TABLE where Fac_Filter=1";
+        Cursor cursor = sqLiteDatabase.rawQuery(qry, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                int facID = cursor.getInt(0);
+                getList.add(facID);
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return getList;
+    }
+
+    public void updateCompFilter(Integer integer) {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("Comp_Filter", 1);
+        sqLiteDatabase.update("Component_TABLE",cv,"Comp_ID=?",new String[]{String.valueOf(integer)});
+    }
+    public void updateFacFilter(Integer integer) {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("Fac_Filter", 1);
+        sqLiteDatabase.update("Facility_TABLE",cv,"Fac_ID=?",new String[]{String.valueOf(integer)});
+    }
+    public void clearCompFilter() {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("Comp_Filter", 0);
+        sqLiteDatabase.update("Component_TABLE",cv,null,null);
+    }
+    public void clearFacFilter() {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("Fac_Filter", 0);
+        sqLiteDatabase.update("Facility_TABLE",cv,null,null);
     }
 }

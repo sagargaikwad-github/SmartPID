@@ -3,11 +3,12 @@ package com.eits.smartpid.model;
 public class ComponentModel {
     int compId;
     String compName;
+    int compFilter;
 
-
-    public ComponentModel(int compId, String compName) {
+    public ComponentModel(int compId, String compName, int compFilter) {
         this.compId = compId;
         this.compName = compName;
+        this.compFilter = compFilter;
     }
 
     public int getCompId() {
@@ -26,5 +27,11 @@ public class ComponentModel {
         this.compName = compName;
     }
 
+    public int getCompFilter() {
+        return compFilter;
+    }
 
+    public void setCompFilter(int compFilter) {
+        this.compFilter = compFilter;
+    }
 }
