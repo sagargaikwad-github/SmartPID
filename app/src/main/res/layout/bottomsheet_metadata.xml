@@ -7,6 +7,7 @@
    <LinearLayout
        android:layout_width="match_parent"
        android:layout_height="match_parent"
+       android:id="@+id/MetaData_BottomSheet_LL"
        android:orientation="vertical">
 
        <LinearLayout
@@ -14,7 +15,7 @@
            android:layout_height="wrap_content"
            android:layout_marginTop="20dp"
            android:layout_marginStart="32dp"
-           android:background="@drawable/filedata_background"
+           android:background="@drawable/spinner_background"
            android:gravity="end">
            <Spinner
                android:id="@+id/bottomSheet_metadata_facility_spinner"
@@ -27,7 +28,7 @@
            android:layout_height="wrap_content"
            android:layout_marginTop="20dp"
            android:layout_marginStart="32dp"
-           android:background="@drawable/filedata_background"
+           android:background="@drawable/spinner_background"
            android:gravity="end">
 
            <Spinner
@@ -79,29 +80,28 @@
            android:layout_height="wrap_content"
            android:gravity="end"
            android:orientation="horizontal">
-           <Button
+
+           <com.google.android.material.button.MaterialButton
                android:id="@+id/bottomSheet_metadata_cancel_BTN"
+               style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
                android:text="Cancel"
-               android:padding="10dp"
-               android:layout_gravity="end"
-               android:gravity="center"
-               android:backgroundTint="@color/text_white"
-               android:layout_marginEnd="12dp"
-               android:layout_marginTop="10dp"
-               android:textColor="@color/text_black"
-               android:layout_height="wrap_content"></Button>
-           <Button
+               android:layout_marginEnd="10dp"
+               android:backgroundTint="@color/green_light_color"
+               android:textColor="@color/text_black">
+           </com.google.android.material.button.MaterialButton>
+
+           <com.google.android.material.button.MaterialButton
                android:id="@+id/bottomSheet_metadata_save_BTN"
+               style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
                android:text="Next"
-               android:padding="10dp"
-               android:layout_gravity="end"
-               android:gravity="center"
                android:layout_marginEnd="32dp"
-               android:layout_marginTop="10dp"
-               android:textColor="@color/text_white"
-               android:layout_height="wrap_content"></Button>
+               android:backgroundTint="@color/green_light_color"
+               android:textColor="@color/text_black">
+           </com.google.android.material.button.MaterialButton>
        </LinearLayout>
 
 

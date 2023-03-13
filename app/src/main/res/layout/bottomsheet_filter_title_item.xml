@@ -4,13 +4,35 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="1dp">
 
-    <TextView
-        android:id="@+id/filterTitle_from_item"
+    <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:text="Component"
-        android:textColor="@color/text_black"
-        android:textSize="22sp"></TextView>
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/filterTitle_from_item"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:text="Component"
+            android:textColor="@color/text_black"
+            android:textSize="@dimen/filter_title_text_size"></TextView>
+        <TextView
+            android:id="@+id/filterTitle_filter_count"
+            android:layout_toRightOf="@+id/filterTitle_from_item"
+            android:layout_width="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_centerVertical="true"
+            android:textSize="@dimen/filter_title_text_size"
+            android:text="0"
+            android:textColor="@color/text_black"
+            android:layout_height="wrap_content"></TextView>
+
+        <View
+            android:layout_below="@id/filterTitle_from_item"
+            android:layout_width="180dp"
+            android:layout_height="0.6dp"
+            android:layout_marginTop="3dp"
+            android:background="@color/text_black"/>
+    </RelativeLayout>
+
 
 </LinearLayout>

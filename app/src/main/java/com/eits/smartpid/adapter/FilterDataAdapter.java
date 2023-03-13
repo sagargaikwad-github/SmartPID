@@ -1,12 +1,12 @@
 package com.eits.smartpid.adapter;
 
 
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import android.widget.CheckBox;
 import android.widget.TextView;
 
@@ -32,13 +32,18 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
     ArrayList<Integer> filteredList_Dashboard = new ArrayList<>();
     ArrayList<Integer> dashboard_list = new ArrayList<>();
 
+    TextView filerCount;
+    int FilterTitlePosition;
 
-    public FilterDataAdapter(ArrayList<String> arrayList, Context context, String titleName, FilterList_Interface filterListInterfaceInterface, ArrayList<Integer> dashBoardList) {
+
+    public FilterDataAdapter(ArrayList<String> arrayList, Context context, String titleName, FilterList_Interface filterListInterfaceInterface, ArrayList<Integer> dashBoardList, TextView filterCount, int position) {
         this.arrayList = arrayList;
         this.context = context;
         TitleName = titleName;
         this.filterListInterfaceInterface = filterListInterfaceInterface;
-        this.filteredList_Dashboard=dashBoardList;
+        this.filteredList_Dashboard = dashBoardList;
+        this.filerCount = filterCount;
+        this.FilterTitlePosition=position;
     }
 
     @NonNull
@@ -60,18 +65,22 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
 
 
         if (TitleName.equals("Component")) {
-            int component = position + 1;
-            int componentNUM = ComponentLIST.get(component).getCompId();
+//            int component = position + 1;
+            int componentNUM = ComponentLIST.get(position).getCompId();
             if (filteredList_Dashboard.contains(componentNUM)) {
                 holder.checkBox.setChecked(true);
+
+                updateScreeen();
             }
         }
 
         if (TitleName.equals("Facility")) {
-            int facility = position + 1;
-            int facilityNUM = FacilityLIST.get(facility).getFacID();
+            //int facility = position + 1;
+            int facilityNUM = FacilityLIST.get(position).getFacID();
             if (filteredList_Dashboard.contains(facilityNUM)) {
                 holder.checkBox.setChecked(true);
+
+                updateScreeen();
 
 //                int num = position + 1;
 //                int MyNum = FacilityLIST.get(num).getFacID();
@@ -87,7 +96,7 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                 if (TitleName.equals("Component")) {
 
                     // ComponentLIST = sqLiteModel.getComponentList();
-                    int num = position + 1;
+                    int num = position;
                     int MyNum = ComponentLIST.get(num).getCompId();
 
                     if (!filteredList_Dashboard.contains(MyNum)) {
@@ -95,22 +104,24 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                         holder.checkBox.setChecked(true);
                         filterListInterfaceInterface.filterList(filteredList_Dashboard);
 
+
+
                     } else {
                         for (int i = 0; i < filteredList_Dashboard.size(); i++) {
                             if (MyNum == filteredList_Dashboard.get(i)) {
                                 filteredList_Dashboard.remove(i);
                                 holder.checkBox.setChecked(false);
                                 filterListInterfaceInterface.filterList(filteredList_Dashboard);
+
                             }
                         }
-
                     }
-
+                    updateScreeen();
                 }
                 if (TitleName.equals("Facility")) {
 
                     FacilityLIST = sqLiteModel.getFacilityList();
-                    int num = position + 1;
+                    int num = position;
 //
                     int MyNum = FacilityLIST.get(num).getFacID();
 
@@ -127,8 +138,8 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                                 filterListInterfaceInterface.filterList(filteredList_Dashboard);
                             }
                         }
-
                     }
+                    updateScreeen();
                 }
             }
         });
@@ -137,7 +148,7 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
             @Override
             public void onClick(View view) {
                 if (TitleName.equals("Component")) {
-                    int num = position + 1;
+                    int num = position;
                     int MyNum = ComponentLIST.get(num).getCompId();
 
                     if (!filteredList_Dashboard.contains(MyNum)) {
@@ -153,11 +164,12 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                             }
                         }
                     }
+                    updateScreeen();
                 }
                 if (TitleName.equals("Facility")) {
 
                     FacilityLIST = sqLiteModel.getFacilityList();
-                    int num = position + 1;
+                    int num = position;
 //
                     int MyNum = FacilityLIST.get(num).getFacID();
 
@@ -176,11 +188,35 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
                         }
 
                     }
+                    updateScreeen();
                 }
+
 
             }
         });
 
+    }
+
+    private void updateScreeen() {
+        ArrayList<Integer>tempComp=new ArrayList<>();
+        ArrayList<Integer>tempFac=new ArrayList<>();
+        for(int i=0;i<filteredList_Dashboard.size();i++)
+        {
+            if(filteredList_Dashboard.get(i)>110)
+            {
+                tempComp.add(filteredList_Dashboard.get(i));
+            }else{
+                tempFac.add(filteredList_Dashboard.get(i));
+            }
+        }
+
+        if(FilterTitlePosition==0)
+        {
+            filerCount.setText(String.valueOf(tempComp.size()));
+        }else
+        {
+            filerCount.setText(String.valueOf(tempFac.size()));
+        }
     }
 
     @Override
@@ -199,4 +235,6 @@ public class FilterDataAdapter extends RecyclerView.Adapter<FilterDataAdapter.ho
             data_title = itemView.findViewById(R.id.data_title);
         }
     }
+
+
 }

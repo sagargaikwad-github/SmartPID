@@ -22,20 +22,6 @@
     </FrameLayout>
 
 
-    <TextView
-        android:id="@+id/viewFilesTV"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:background="@drawable/filedata_background"
-        android:text="View\nFiles"
-        android:layout_margin="10dp"
-        android:textSize="18sp"
-        android:gravity="center"
-        android:textColor="@color/text_white"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></TextView>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -49,10 +35,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="40dp"
+            android:text="ppm"
             android:background="@color/text_black"
             android:padding="5dp"
             android:textColor="@color/text_yellow"
-            android:textSize="30dp"
+            android:textSize="26dp"
             android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -107,6 +94,21 @@
             app:layout_constraintEnd_toEndOf="@+id/recordBTN_IV"
             app:layout_constraintStart_toStartOf="@+id/recordBTN_IV"
             app:layout_constraintTop_toBottomOf="@+id/recordBTN_IV" />
+
+        <TextView
+            android:id="@+id/viewFilesTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/spinner_background"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="View Files"
+            android:textColor="@color/text_white"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"></TextView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

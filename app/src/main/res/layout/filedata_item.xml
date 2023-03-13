@@ -3,18 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="10dp">
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp"
+    android:layout_marginBottom="10dp">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardElevation="10dp"
-        app:cardCornerRadius="4dp">
+        android:backgroundTint="@color/green_light_color"
+        app:cardCornerRadius="8dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/file_bg_color"
+            android:background="@color/green_light_color"
             android:padding="10dp">
 
             <ImageView
@@ -57,14 +59,13 @@
                 android:textColor="@color/text_black"></TextView>
 
 
-
             <TextView
                 android:id="@+id/fileFacility_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/fileDateTime_TV"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="5dp"
-                android:layout_below="@id/fileDateTime_TV"
                 android:layout_toRightOf="@id/fileComponent_TV"
                 android:text="Facility : New One"
                 android:textColor="@color/text_black"></TextView>
@@ -73,19 +74,20 @@
                 android:id="@+id/fileSiteLocation_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@id/fileImage_iv"
                 android:layout_below="@id/fileComponent_TV"
-                android:layout_marginTop="5dp"
                 android:layout_marginStart="2dp"
+                android:layout_marginTop="5dp"
+                android:layout_toRightOf="@id/fileImage_iv"
                 android:text="Site / Location : Delhi"
                 android:textColor="@color/text_black"></TextView>
+
             <TextView
                 android:id="@+id/fileDuration_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/fileFacility_TV"
-                android:layout_marginTop="5dp"
                 android:layout_marginStart="20dp"
+                android:layout_marginTop="5dp"
                 android:layout_toRightOf="@id/fileSiteLocation_TV"
                 android:text="Duration : 22:99"
                 android:textColor="@color/text_black"></TextView>
@@ -94,8 +96,8 @@
                 android:id="@+id/fileNotes_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
                 android:layout_below="@id/fileImage_iv"
+                android:layout_marginStart="20dp"
                 android:text="Notes : Null"
                 android:textColor="@color/text_black"></TextView>
 
@@ -139,11 +141,12 @@
 
             <ImageView
                 android:id="@+id/fileDelete"
-                android:padding="10dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
+                android:padding="10dp"
                 android:src="@drawable/ic_delete"></ImageView>
         </RelativeLayout>
     </androidx.cardview.widget.CardView>
+
 </RelativeLayout>

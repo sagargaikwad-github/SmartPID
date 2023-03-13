@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:id="@+id/RL"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -59,17 +60,33 @@
         android:id="@+id/bottomSheet_filer_rv_MainComponents"
         android:layout_width="wrap_content"
         android:layout_below="@id/filter_toolbar_layput"
-        android:background="@color/file_bg_color"
         android:layout_above="@+id/savecancel_ll"
         android:layout_height="match_parent">
     </androidx.recyclerview.widget.RecyclerView>
+    <View
+        android:id="@+id/bottomSheet_filer_rv_viewline"
+        android:layout_width="0.6dp"
+        android:layout_below="@id/filter_toolbar_layput"
+        android:background="@color/text_black"
+        android:layout_height="match_parent"
+        android:layout_above="@id/savecancel_ll"
+        android:layout_toRightOf="@+id/bottomSheet_filer_rv_MainComponents"></View>
+
+    <View
+        android:id="@+id/bottomSheet_filer_rv_viewline_2"
+        android:layout_width="match_parent"
+        android:layout_below="@id/bottomSheet_filer_rv_MainComponents"
+        android:background="@color/text_black"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0.6dp"
+        android:layout_above="@id/savecancel_ll"></View>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/bottomSheet_filer_rv_data_Components"
         android:layout_width="match_parent"
         android:layout_below="@id/filter_toolbar_layput"
         android:layout_above="@+id/savecancel_ll"
-        android:layout_toRightOf="@id/bottomSheet_filer_rv_MainComponents"
+        android:layout_toRightOf="@id/bottomSheet_filer_rv_viewline"
         android:layout_height="match_parent">
     </androidx.recyclerview.widget.RecyclerView>
 
@@ -78,26 +95,35 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:layout_alignParentBottom="true"
         android:weightSum="2"
+        android:layout_marginStart="150dp"
+        android:layout_marginEnd="150dp"
         android:orientation="horizontal">
-        <Button
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:id="@+id/bottomsheet_filter_Cancel_btn"
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="5dp"
             android:text="Cancel"
-            android:textColor="@color/text_black"
-            android:backgroundTint="@color/text_white"
-            android:layout_height="wrap_content">
-        </Button>
+            android:layout_marginEnd="10dp"
+            android:backgroundTint="@color/green_light_color"
+            android:textColor="@color/text_black">
+        </com.google.android.material.button.MaterialButton>
+
         <Button
             android:id="@+id/bottomsheet_filter_apply_btn"
             android:layout_width="0dp"
-            android:layout_weight="1"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
             android:text="Apply"
-            android:textColor="@color/text_white">
-        </Button>
+            android:backgroundTint="@color/green_light_color"
+            android:textColor="@color/text_black"
+            app:cornerRadius="5dp"></Button>
     </LinearLayout>
 </RelativeLayout>

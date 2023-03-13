@@ -14,130 +14,130 @@
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/dashboard_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"></com.google.android.material.appbar.MaterialToolbar>
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary_color"></com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-<!--    <LinearLayout-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent"-->
-<!--        android:orientation="horizontal"-->
-<!--        android:weightSum="2">-->
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:orientation="horizontal"-->
+    <!--        android:weightSum="2">-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal">
 
-            <LinearLayout
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Sort By : "
+                android:textColor="@color/text_black"
+                android:textSize="@dimen/filter_text_size" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/dashboard_sortBy_RV"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:orientation="horizontal">
+                android:layout_weight="1"></androidx.recyclerview.widget.RecyclerView>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp">
 
                 <TextView
+                    android:id="@+id/filter_clear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/filer_background"
+                    android:drawableStart="@drawable/ic_clear_filter"
+                    android:gravity="center"
+                    android:padding="2dp"
+                    android:paddingEnd="5dp"
+                    android:text="Clear Filter"
+                    android:textColor="@color/text_black"
+                    android:textSize="@dimen/filter_text_size"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"></TextView>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/filer_Search"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="Sort By : "
-                    android:textColor="@color/text_black"
-                    android:textSize="16sp" />
+                    android:background="@drawable/filer_background"
+                    android:drawableEnd="@drawable/ic_filter_on"
+                    android:gravity="center"
+                    android:padding="2dp"
+                    android:textSize="@dimen/filter_text_size"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"></TextView>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/dashboard_sortBy_RV"
-                    android:layout_width="match_parent"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical"
-                    android:layout_height="wrap_content"></androidx.recyclerview.widget.RecyclerView>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <TextView
+                    android:id="@+id/filter_count"
                     android:layout_width="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="#FF1100"
+                    android:padding="2dp"
+                    android:textColor="@color/text_white"
+                    android:textSize="1sp"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="@+id/filer_Search"
+                    app:layout_constraintTop_toTopOf="@+id/filer_Search"></TextView>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <TextView
-                        android:id="@+id/filter_clear"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/filer_background"
-                        android:drawableStart="@drawable/ic_clear_filter"
-                        android:text="Clear Filter"
-                        android:textColor="@color/text_black"
-                        android:textSize="15sp"
-                        android:padding="2dp"
-                        android:gravity="center"
-                        android:paddingEnd="5dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"></TextView>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:id="@+id/filer_Search"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:background="@drawable/filer_background"
-                        android:drawableEnd="@drawable/ic_filter_on"
-                        android:padding="2dp"
-                        android:paddingStart="5dp"
-                        android:text="Filter"
-                        android:textColor="@color/text_black"
-                        android:textSize="15sp"
-                        android:gravity="center"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"></TextView>
-
-                    <TextView
-                        android:id="@+id/filter_count"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="#FF1100"
-                        android:padding="2dp"
-                        android:textColor="@color/text_white"
-                        android:textSize="1sp"
-                        android:layout_marginTop="2dp"
-                        android:layout_marginEnd="2dp"
-                        android:visibility="gone"
-                        app:layout_constraintEnd_toEndOf="@+id/filer_Search"
-                        app:layout_constraintTop_toTopOf="@+id/filer_Search"></TextView>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/dashboard_fileDisplay_RV"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"></androidx.recyclerview.widget.RecyclerView>
-            <TextView
-                android:id="@+id/nothingToShow"
-                android:visibility="gone"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:textSize="22sp"
-                android:textColor="@color/text_black"
-                android:text="Nothing to Show"></TextView>
         </LinearLayout>
 
-<!--        <Button-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_gravity="center"-->
-<!--            android:text="Start Camera"-->
-<!--            android:textColor="@color/text_white"-->
-<!--            android:layout_weight="0.5"></Button>-->
-<!--    </LinearLayout>-->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/dashboard_fileDisplay_RV"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></androidx.recyclerview.widget.RecyclerView>
+
+        <TextView
+            android:id="@+id/nothingToShow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Nothing to Show"
+            android:textColor="@color/text_black"
+            android:textSize="22sp"
+            android:visibility="gone"></TextView>
+    </LinearLayout>
+
+    <!--        <Button-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_gravity="center"-->
+    <!--            android:text="Start Camera"-->
+    <!--            android:textColor="@color/text_white"-->
+    <!--            android:layout_weight="0.5"></Button>-->
+    <!--    </LinearLayout>-->
 </LinearLayout>
 
 

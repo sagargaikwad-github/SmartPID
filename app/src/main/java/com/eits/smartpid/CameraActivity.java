@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -33,10 +34,10 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.CamcorderProfile;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -53,14 +54,18 @@ import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -71,7 +76,6 @@ import com.eits.smartpid.model.ComponentModel;
 import com.eits.smartpid.model.FacilityModel;
 import com.eits.smartpid.model.SQLiteModel;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -80,9 +84,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -97,7 +99,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -108,7 +109,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.Set;
 
 public class CameraActivity extends BaseClass {
@@ -141,10 +141,11 @@ public class CameraActivity extends BaseClass {
 
 
     String Notes, SiteLocation;
-    int Facility = 0, Component = 0;
+    int Facility, Component;
 
     int seconds = 0;
     MediaRecorder mMediaRecorder;
+    int VideoBitrate;
 
     boolean isSurfaceAvailable = false;
 
@@ -195,23 +196,43 @@ public class CameraActivity extends BaseClass {
     ArrayList<String> LatitudeList;
     ArrayList<String> LongitudeList;
 
+
+    @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-//                WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
+
+
+        //setContentView(R.layout.activity_camera);
+
         //Permissions for Camera:
         checkCameraPermissions();
 
-        sqLiteModel=new SQLiteModel(this);
+        sqLiteModel = new SQLiteModel(this);
 
         sqLiteModel.clearCompFilter();
         sqLiteModel.clearFacFilter();
+
+//        locationHandle();
+//        mFusedLocationClient.getLastLocation()
+//                .addOnSuccessListener(new OnSuccessListener<Location>() {
+//                    @Override
+//                    public void onSuccess(Location location) {
+//                       if(location!=null)
+//                       {
+//                           Toast.makeText(CameraActivity.this, "Hii", Toast.LENGTH_SHORT).show();
+//                       }else
+//                       {
+//                           Toast.makeText(CameraActivity.this, "Null_HI", Toast.LENGTH_SHORT).show();
+//                       }
+//                    }
+//                });
+
 
         broadcastReceiver = new BroadcastReceiver() {
             @SuppressLint("MissingPermission")
@@ -238,20 +259,21 @@ public class CameraActivity extends BaseClass {
                                     public void onLocationResult(LocationResult locationResult) {
                                         if (locationResult != null) {
                                             for (Location location : locationResult.getLocations()) {
-                                                double latitude=location.getLatitude();
-                                                double longitude=location.getLongitude();
+                                                double latitude = location.getLatitude();
+                                                double longitude = location.getLongitude();
 
-                                                String lat=String.format("%.5f",latitude);
-                                                String lon=String.format("%.5f",longitude);
+                                                String lat = String.format("%.5f", latitude);
+                                                String lon = String.format("%.5f", longitude);
 
                                                 latitudeTV.setText("LAT-" + lat);
-                                                longitudeTV.setText("LONG-" + lon);
+                                                longitudeTV.setText("LON-" + lon);
                                             }
                                         } else {
                                             Toast.makeText(context, "Hi", Toast.LENGTH_SHORT).show();
                                         }
                                     }
                                 };
+
                                 mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
 
                             } catch (ApiException e) {
@@ -277,7 +299,6 @@ public class CameraActivity extends BaseClass {
                 }
             }
         };
-
         registerReceiver(broadcastReceiver, new IntentFilter(LocationManager.MODE_CHANGED_ACTION));
 
 
@@ -319,6 +340,7 @@ public class CameraActivity extends BaseClass {
             return false;
         }
     }
+
 
     private void locationHandle() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(CameraActivity.this);
@@ -390,6 +412,7 @@ public class CameraActivity extends BaseClass {
                                         ComponentArray[i] = Component_List.get(i).getCompName();
                                     }
 
+
                                     FacilityArray = new String[Facility_List.size()];
                                     for (int i = 0; i < Facility_List.size(); i++) {
                                         FacilityArray[i] = Facility_List.get(i).getFacName();
@@ -402,7 +425,18 @@ public class CameraActivity extends BaseClass {
                                     TextInputEditText siteLocation = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_siteLocation_ET);
                                     TextInputEditText notes = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_Notes_ET);
 
+
+                                    LinearLayout MetaData_BottomSheet_LL = bottomSheetDialog.findViewById(R.id.MetaData_BottomSheet_LL);
+                                    MetaData_BottomSheet_LL.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            hidekeyboard(MetaData_BottomSheet_LL);
+                                        }
+                                    });
+
                                     Button SaveBTN = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_save_BTN);
+                                    Button CancelBTN = bottomSheetDialog.findViewById(R.id.bottomSheet_metadata_cancel_BTN);
+
 
                                     ArrayAdapter facilityAdapter = new ArrayAdapter(CameraActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, FacilityArray);
                                     FacilitySpinner.setAdapter(facilityAdapter);
@@ -410,8 +444,8 @@ public class CameraActivity extends BaseClass {
                                     ArrayAdapter componentAdapter = new ArrayAdapter(CameraActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, ComponentArray);
                                     ComponentSpinner.setAdapter(componentAdapter);
 
-                                    sharedPreferences = getSharedPreferences("MetaData", MODE_PRIVATE);
 
+                                    sharedPreferences = getSharedPreferences("MetaData", MODE_PRIVATE);
                                     int SP_component = 0, SP_facility = 0;
                                     String SP_sitelocation = "", SP_Notes = "";
                                     try {
@@ -425,6 +459,54 @@ public class CameraActivity extends BaseClass {
                                     FacilitySpinner.setSelection(SP_facility);
                                     ComponentSpinner.setSelection(SP_component);
 
+                                    FacilitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                        @Override
+                                        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                            mdecorView = bottomSheetDialog.getWindow().getDecorView();
+                                            hideSystemUI();
+                                        }
+
+                                        @Override
+                                        public void onNothingSelected(AdapterView<?> adapterView) {
+                                            mdecorView = bottomSheetDialog.getWindow().getDecorView();
+                                            hideSystemUI();
+                                        }
+                                    });
+                                    ComponentSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                        @Override
+                                        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                            mdecorView = bottomSheetDialog.getWindow().getDecorView();
+                                            hideSystemUI();
+                                        }
+
+                                        @Override
+                                        public void onNothingSelected(AdapterView<?> adapterView) {
+                                            mdecorView = bottomSheetDialog.getWindow().getDecorView();
+                                            hideSystemUI();
+                                        }
+                                    });
+                                    FacilitySpinner.setOnTouchListener(new View.OnTouchListener() {
+                                        @Override
+                                        public boolean onTouch(View view, MotionEvent motionEvent) {
+                                            //FacilitySpinner.clearFocus();
+
+                                            hidekeyboard(MetaData_BottomSheet_LL);
+                                            //mdecorView =  bottomSheetDialog.getWindow().getDecorView();
+                                            //hideSystemUI();
+                                            return false;
+                                        }
+                                    });
+                                    ComponentSpinner.setOnTouchListener(new View.OnTouchListener() {
+                                        @Override
+                                        public boolean onTouch(View view, MotionEvent motionEvent) {
+                                            //ComponentSpinner.clearFocus();
+                                            hidekeyboard(MetaData_BottomSheet_LL);
+                                            // mdecorView =  bottomSheetDialog.getWindow().getDecorView();
+                                            //hideSystemUI();
+                                            return false;
+                                        }
+                                    });
+
                                     siteLocation.setText(SP_sitelocation);
                                     notes.setText(SP_Notes);
 
@@ -434,8 +516,10 @@ public class CameraActivity extends BaseClass {
 
                                             SharedPreferences.Editor editor = sharedPreferences.edit();
 
-                                            Component = ComponentSpinner.getSelectedItemPosition();
-                                            Facility = FacilitySpinner.getSelectedItemPosition();
+                                            // int ComponentID = ComponentSpinner.getSelectedItemPosition();
+                                            int ComponentID = ComponentSpinner.getSelectedItemPosition();
+                                            int FacilityID = FacilitySpinner.getSelectedItemPosition();
+
 
 //                                            int ComponentID = Component_List.get(Component).getCompId();
                                             //   String ComponentName = Component_List.get(Component).getCompName();
@@ -446,25 +530,35 @@ public class CameraActivity extends BaseClass {
                                             SiteLocation = siteLocation.getText().toString();
                                             Notes = notes.getText().toString();
 
-                                            if (Component != 0 && Facility != 0) {
+                                            if (ComponentID != 0 && FacilityID != 0) {
                                                 bottomSheetDialog.dismiss();
                                                 mIsRecording = true;
                                                 createVideoFolder();
                                                 startRecord();
-                                                editor.putInt("Component", Component);
-                                                editor.putInt("Facility", Facility);
+
+                                                Component = Component_List.get(ComponentID).getCompId();
+                                                Facility = Facility_List.get(FacilityID).getFacID();
+
+                                                editor.putInt("Component", ComponentID);
+                                                editor.putInt("Facility", FacilityID);
                                                 editor.putString("SiteLocation", SiteLocation);
                                                 editor.putString("Notes", Notes);
                                                 editor.commit();
                                                 Toast.makeText(CameraActivity.this, "Recording Started", Toast.LENGTH_SHORT).show();
                                             } else {
-                                                if (Facility == 0) {
+                                                if (FacilityID == 0) {
                                                     Toast.makeText(CameraActivity.this, "Please Select Facility", Toast.LENGTH_SHORT).show();
                                                 } else {
                                                     Toast.makeText(CameraActivity.this, "Please Select Component", Toast.LENGTH_SHORT).show();
                                                 }
                                             }
 
+                                        }
+                                    });
+                                    CancelBTN.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            bottomSheetDialog.dismiss();
                                         }
                                     });
                                 }
@@ -526,6 +620,23 @@ public class CameraActivity extends BaseClass {
         });
     }
 
+    private void hideSystemUI() {
+        mdecorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+
+    }
+
+    private void hidekeyboard(LinearLayout linearLayout) {
+        InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.
+                INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(linearLayout.getWindowToken(), 0);
+    }
+
     private void findID() {
         viewFilesTV = findViewById(R.id.viewFilesTV);
         mTextureView = findViewById(R.id.camera_textureView);
@@ -549,7 +660,6 @@ public class CameraActivity extends BaseClass {
             if (isSurfaceAvailable == true) {
                 connectCamera();
                 startBluetooth();
-
                 startLocation();
             }
         }
@@ -583,7 +693,6 @@ public class CameraActivity extends BaseClass {
                     Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         }
     }
-
 
     private boolean checkLocationPermission() {
         return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -626,14 +735,14 @@ public class CameraActivity extends BaseClass {
                             if (locationResult != null) {
                                 for (Location location : locationResult.getLocations()) {
 
-                                    double latitude=location.getLatitude();
-                                    double longitude=location.getLongitude();
+                                    double latitude = location.getLatitude();
+                                    double longitude = location.getLongitude();
 
-                                    String lat=String.format("%.5f",latitude);
-                                    String lon=String.format("%.5f",longitude);
+                                    String lat = String.format("%.5f", latitude);
+                                    String lon = String.format("%.5f", longitude);
 
                                     latitudeTV.setText("LAT-" + lat);
-                                    longitudeTV.setText("LONG-" + lon);
+                                    longitudeTV.setText("LON-" + lon);
 
 //                                    latitudeTV.setText("LAT-" + String.valueOf(location.getLatitude()));
 //                                    longitudeTV.setText("LONG-" + String.valueOf(location.getLongitude()));
@@ -671,12 +780,14 @@ public class CameraActivity extends BaseClass {
     @SuppressLint("MissingPermission")
     private void checkBluetoothIsOn() {
         if (!bluetoothAdapter.isEnabled()) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, 999);
         } else {
             bluetoothData();
         }
-
     }
 
     @SuppressLint("MissingPermission")
@@ -697,7 +808,6 @@ public class CameraActivity extends BaseClass {
 
             AlertDialog.Builder builder = new AlertDialog.Builder(CameraActivity.this);
 
-            builder.create().getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
 
             builder.setTitle("Choose Bluetooth Device");
             builder.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
@@ -708,6 +818,14 @@ public class CameraActivity extends BaseClass {
             });
             AlertDialog alert = builder.create();
             alert.show();
+
+            alert.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+            alert.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
         }
     }
 
@@ -720,7 +838,7 @@ public class CameraActivity extends BaseClass {
             bluetoothData();
         }
         if (requestCode == 2 && resultCode == RESULT_OK) {
-
+               turnOnGPS(); //Null Work
         } else {
             mFusedLocationClient = LocationServices.getFusedLocationProviderClient(CameraActivity.this);
             mFusedLocationClient.getLastLocation()
@@ -730,21 +848,20 @@ public class CameraActivity extends BaseClass {
                             // Got last known location. In some rare situations this can be null.
                             if (location != null) {
 
-                                double latitude=location.getLatitude();
-                                double longitude=location.getLongitude();
+                                double latitude = location.getLatitude();
+                                double longitude = location.getLongitude();
 
-                                String lat=String.format("%.5f",latitude);
-                                String lon=String.format("%.5f",longitude);
+                                String lat = String.format("%.5f", latitude);
+                                String lon = String.format("%.5f", longitude);
 
                                 latitudeTV.setText("LAT-" + lat);
-                                longitudeTV.setText("LONG-" + lon);
+                                longitudeTV.setText("LON-" + lon);
 
 //                                latitudeTV.setText("LAT-"+String.valueOf(location.getLatitude()));
 //                                longitudeTV.setText("LONG-"+String.valueOf(location.getLongitude()));
-                            }else
-                            {
-                                latitudeTV.setText("LAT-"+"Null");
-                                longitudeTV.setText("LONG-"+"Null");
+                            } else {
+                                latitudeTV.setText("LAT-" + "Null");
+                                longitudeTV.setText("LON-" + "Null");
                             }
                         }
                     });
@@ -768,20 +885,35 @@ public class CameraActivity extends BaseClass {
     private void BottomSheet(int bottomSheet) {
         bottomSheetDialog = new BottomSheetDialog(CameraActivity.this);
 
-        mdecorView=bottomSheetDialog.getWindow().getDecorView();
-        hideSystemUI();
+        //mdecorView=bottomSheetDialog.getWindow().getDecorView();
+        // hideSystemUI();
+
 
         BottomSheetBehavior<View> bottomSheetBehavior;
         View bottomSheetView = LayoutInflater.from(CameraActivity.this).inflate(bottomSheet, null);
         bottomSheetDialog.setContentView(bottomSheetView);
 
         bottomSheetBehavior = BottomSheetBehavior.from((View) bottomSheetView.getParent());
+        bottomSheetDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-        bottomSheetBehavior.setDraggable(false);
+        bottomSheetBehavior.setMaxHeight(ViewGroup.LayoutParams.MATCH_PARENT);
         bottomSheetBehavior.setMaxWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        bottomSheetBehavior.setPeekHeight(100);
+        bottomSheetBehavior.setDraggable(false);
+
         bottomSheetDialog.show();
 
-        hideSystemUI();
+
+        bottomSheetDialog.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        bottomSheetDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+
+
+        // hideSystemUI();
 
     }
 
@@ -793,7 +925,6 @@ public class CameraActivity extends BaseClass {
             if (mIsRecording) {
                 createVideoFolder();
                 startRecord();
-
             }
             startPreview();
 
@@ -822,14 +953,12 @@ public class CameraActivity extends BaseClass {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-
     private static class CompareSizeByArea implements Comparator<Size> {
         @Override
         public int compare(Size size, Size t1) {
             return Long.signum((long) size.getWidth() * size.getHeight() /
                     (long) t1.getWidth() * t1.getHeight());
         }
-
     }
 
     boolean flashStatus = false;
@@ -837,6 +966,18 @@ public class CameraActivity extends BaseClass {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//            getWindow().getDecorView().getWindowInsetsController().hide(WindowInsets.Type.systemBars());
+//        } else {
+//            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//                    | View.SYSTEM_UI_FLAG_FULLSCREEN);
+//        }
+
 //        View decorView = getWindow().getDecorView();
 //        if (hasFocus) {
 //            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -854,35 +995,40 @@ public class CameraActivity extends BaseClass {
 //                    | View.SYSTEM_UI_FLAG_FULLSCREEN
 //                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 //        }
+//
+//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+//                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        mdecorView=getWindow().getDecorView();
-        hideSystemUI();
-    }
-
-    private void hideSystemUI() {
-        mdecorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+            mdecorView = getWindow().getDecorView();
+            mdecorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
     }
+
 
     private void stopRecord() {
         progressDialog.setMessage("Processing Please Wait");
         progressDialog.setCancelable(false);
-        mdecorView = progressDialog.getWindow().getDecorView();
+        //mdecorView = progressDialog.getWindow().getDecorView();
         progressDialog.show();
+
+        progressDialog.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        progressDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
 
         recordingTimer.cancel();
         seconds = 0;
 
-        hideSystemUI();
+        //hideSystemUI();
         //countDownTimer.cancel();
 
         try {
@@ -913,14 +1059,16 @@ public class CameraActivity extends BaseClass {
                 e.printStackTrace();
             }
         }
-
     }
 
     private void TextOnVideo(String fileSavePath) throws IOException {
         createVideoFileName();
         createJSON();
 
-        String a = "-y -i " + fileSavePath + " -metadata comment=" + json + " -framerate 60 -vf [in]" + text() + "[out] " + mVideoFileName;
+
+        // String a = "-y -i " + fileSavePath + " -metadata comment=" + json + " -framerate 60 -vf [in]" + text() + "[out] " + mVideoFileName;
+        String a = "-y -i " + fileSavePath + " -metadata comment=" + json + " -vf [in]" + text(fileSavePath) + "[out] -r 18 -qscale 0 -preset ultrafast " + mVideoFileName;
+        //  String a = "-y -i " + fileSavePath + " -metadata comment=" + json + " -vf [in]" + text() + "[out] -crf 18 -vf format=yuv420p -r 25 -qscale 0 " + mVideoFileName;
         Log.e("text Value", a);
 
         long executionId = FFmpeg.executeAsync(a, (executionId1, returnCode) -> {
@@ -932,6 +1080,7 @@ public class CameraActivity extends BaseClass {
                 }
                 progressDialog.dismiss();
                 MinMaxAvgList.clear();
+
                 TimeArrayList.clear();
 
                 LatitudeList.clear();
@@ -966,15 +1115,18 @@ public class CameraActivity extends BaseClass {
             System.out.println("TimeArray : " + i + " : " + TimeArrayList.get(i));
         }
 
+        float Min = 0;
+        float Max = 0;
+        float Average = 0;
 
-        float Min = MinMaxAvgList.get(0);
+        Min = MinMaxAvgList.get(0);
         for (int i = 0; i < MinMaxAvgList.size(); i++) {
             if (Min > MinMaxAvgList.get(i)) {
                 Min = MinMaxAvgList.get(i);
             }
         }
 
-        float Max = MinMaxAvgList.get(0);
+        Max = MinMaxAvgList.get(0);
         for (int i = 0; i < MinMaxAvgList.size(); i++) {
             if (Max < MinMaxAvgList.get(i)) {
                 Max = MinMaxAvgList.get(i);
@@ -985,7 +1137,8 @@ public class CameraActivity extends BaseClass {
         for (int i = 0; i < MinMaxAvgList.size(); i++) {
             Total = Total + MinMaxAvgList.get(i);
         }
-        float Average = Total / MinMaxAvgList.size();
+        Average = Total / MinMaxAvgList.size();
+
 
         try {
             // Create a new instance of a JSONObject
@@ -1015,33 +1168,135 @@ public class CameraActivity extends BaseClass {
         }
     }
 
-    private String text() {
+    private String text(String fileSavePath) {
+
+        String VideoHeight=VideoHeight(fileSavePath);
+        String VideoWidth=VideoWidth(fileSavePath);
+
+        int height=Integer.parseInt(VideoHeight);
+        int width=Integer.parseInt(VideoWidth);
+
+
+        int textSize;
+        int datex,datey;
+        int timex,timey;
+        int latx,laty;
+        int lonx,lony;
+
+
+        if (width < 1080) {
+           textSize=40;
+           datex=width-220;
+           datey=30;
+
+           timex=width-440;
+           timey=30;
+
+           latx=width/2;
+           latx=latx/2-100;
+           laty=height-100;
+
+           lonx=width/2;
+           lonx=lonx+100;
+           lony=height-100;
+
+        } else if (width <= 1280) {
+            textSize=50;
+            datex=width-250;
+            datey=40;
+
+            timex=width-500;
+            timey=40;
+
+            latx=width/2-150;
+            laty=height-150;
+
+            lonx=width/2+150;
+            lony=height-150;
+
+        } else {
+            textSize=60;
+            datex=width-350;
+            datey=50;
+
+            timex=width-700;
+            timey=50;
+
+            latx=width/2-700;
+            laty=height-200;
+
+            lonx=width/2+350;
+            lony=height-200;
+
+        }
+
+
         String text = "";
         for (int i = 0; i < MinMaxAvgList.size(); i++) {
 
             String LAT = "LAT-" + i;
             String LON = "LON-" + i;
 
-            System.out.println("TimeArray : " + TimeArrayList.get(i));
-
             if (i < MinMaxAvgList.size() - 1) {
-                text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',";
+                text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+datex+":y="+datey+":enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+timex+":y="+timey+":enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+latx+":y="+laty+":enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+lonx+":y="+lony+":enable='between(t\\," + i + "\\," + (i + 1) + ")',";
 
             } else {
-                text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
-                        "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'";
+                text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+datex+":y="+datey+":enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+timex+":y="+timey+":enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+latx+":y="+laty+":enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+                        "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize="+textSize+":fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x="+lonx+":y="+lony+":enable='between(t\\," + i + "\\," + (i + 1) + ")'";
+
             }
+            System.out.println(text);
         }
-        System.out.println(text);
         return text;
     }
+
+
+//    text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//            "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//            "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//            "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//            "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")',";
+//
+//} else {
+//        text = text + "drawtext=text=" + MinMaxAvgList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=80:y=(h-text_h)/2:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//        "drawtext=text=" + RecordingDate + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//        "drawtext=text=" + TimeArrayList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-500:y=10:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//        "drawtext=text=" + LatitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'," +
+//        "drawtext=text=" + LongitudeList.get(i) + ":fontfile=/system/fonts/Roboto-Regular.ttf:fontsize=60:fontcolor=yellow:box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-300:y=h-th-100:enable='between(t\\," + i + "\\," + (i + 1) + ")'";
+//        }
+
+    private String VideoHeight(String videoPath) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(this, Uri.parse(videoPath));
+        } catch (Exception e) {
+            Log.e("Error3", e.toString());
+
+        }
+        String Height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+        retriever.release();
+        return Height;
+    }
+    private String VideoWidth(String videoPath) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(this, Uri.parse(videoPath));
+        } catch (Exception e) {
+            Log.e("Error3", e.toString());
+
+        }
+        String Width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+        retriever.release();
+        return Width;
+    }
+
 
     private void checkCameraPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -1091,8 +1346,8 @@ public class CameraActivity extends BaseClass {
         Facility_List.clear();
         Component_List.clear();
 
-        Facility_List = sqLiteModel.getFacilityList();
-        Component_List = sqLiteModel.getComponentList();
+        Facility_List = sqLiteModel.getFacilityListForCameraActivitySpinner();
+        Component_List = sqLiteModel.getComponentListForCameraActivitySpinner();
 
         TimeArrayList = new ArrayList<>();
         MinMaxAvgList = new ArrayList<>();
@@ -1155,7 +1410,13 @@ public class CameraActivity extends BaseClass {
             public void run() {
                 bluetoothCount.setText(String.valueOf(BluetoothText));
                 if (mIsRecording) {
-                    MinMaxAvgList.add(Float.valueOf(bluetoothCount.getText().toString()));
+                    int val = -100;
+                    try {
+                        val = Integer.parseInt(bluetoothCount.getText().toString());
+                    } catch (Exception e) {
+
+                    }
+                    MinMaxAvgList.add(Float.valueOf(val));
                 }
                 bluetoothHandler.postDelayed(bluetoothRunnable, 1000);
             }
@@ -1403,6 +1664,7 @@ public class CameraActivity extends BaseClass {
                             try {
                                 RecordingTimer();
                                 recordingTimer.start();
+                                //   mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
                                 cameraCaptureSession.setRepeatingRequest(
                                         mCaptureRequestBuilder.build(), null, null);
                             } catch (CameraAccessException e) {
@@ -1473,6 +1735,8 @@ public class CameraActivity extends BaseClass {
                         public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
                             mPreviewCaptureSession = cameraCaptureSession;
                             try {
+                                //mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+                                //mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
                                 mPreviewCaptureSession.setRepeatingRequest(mCaptureRequestBuilder.build(),
                                         null, mBackgroundHandler); //Nackgroundasdd
                             } catch (CameraAccessException e) {
@@ -1615,9 +1879,9 @@ public class CameraActivity extends BaseClass {
         camcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
 
         //STEP 4: Set all other Functions to a mediaRecorder.
-        int targetVideoBitRate = camcorderProfile.videoBitRate;
+        VideoBitrate = camcorderProfile.videoBitRate;
         mMediaRecorder.setOutputFile(mTempVideoFileName);
-        mMediaRecorder.setVideoEncodingBitRate(targetVideoBitRate);
+        mMediaRecorder.setVideoEncodingBitRate(VideoBitrate);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mMediaRecorder.setVideoFrameRate(camcorderProfile.videoFrameRate);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
@@ -1629,7 +1893,7 @@ public class CameraActivity extends BaseClass {
 
         //STEP 5: VideoSize gives error because SomeDevice not recording its Full capacity, so we customize this.
         //Not all devices tested but some available devices are checked and its working Properly.
-        if (mVideoSize.getWidth() < 1080) {
+       if (mVideoSize.getWidth() < 1080) {
             mMediaRecorder.setVideoSize(960, 720);
         } else if (mVideoSize.getWidth() <= 1280) {
             mMediaRecorder.setVideoSize(1280, 720);
@@ -1642,7 +1906,6 @@ public class CameraActivity extends BaseClass {
         //After Successful Prepare we will start MediaRecorder that records our Screen.
         mMediaRecorder.prepare();
         mMediaRecorder.start();
-
     }
 
     @Override

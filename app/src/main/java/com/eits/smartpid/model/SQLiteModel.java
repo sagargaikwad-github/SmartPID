@@ -55,14 +55,19 @@ public class SQLiteModel extends SQLiteOpenHelper {
         ArrayList<ComponentModel>arrayList=new ArrayList<>();
 
         SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
-        Cursor cursor = sqLiteDatabase.rawQuery("select * from Component_TABLE", null);
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from Component_TABLE ORDER BY Comp_Name", null);
         if (cursor.moveToFirst()) {
             do {
                 int compID = cursor.getInt(0);
                 String compName = cursor.getString(1);
                 int compFilter = cursor.getInt(2);
 
-                arrayList.add(new ComponentModel( compID, compName,compFilter));
+                if(compID==200) {
+
+                }else
+                {
+                    arrayList.add(new ComponentModel(compID, compName, compFilter));
+                }
             } while (cursor.moveToNext());
         } else {
 
@@ -74,6 +79,50 @@ public class SQLiteModel extends SQLiteOpenHelper {
         ArrayList<FacilityModel>arrayList=new ArrayList<>();
 
         SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from Facility_TABLE ORDER BY Fac_Name", null);
+        if (cursor.moveToFirst()) {
+            do {
+                int facID = cursor.getInt(0);
+                String facName = cursor.getString(1);
+                int facFilter = cursor.getInt(2);
+
+                if(facID==100)
+                {
+                }else
+                {
+                    arrayList.add(new FacilityModel(facID, facName,facFilter));
+                }
+
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return arrayList;
+    }
+
+    public ArrayList<ComponentModel> getComponentListForCameraActivitySpinner() {
+        ArrayList<ComponentModel>arrayList=new ArrayList<>();
+
+        SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from Component_TABLE", null);
+        if (cursor.moveToFirst()) {
+            do {
+                int compID = cursor.getInt(0);
+                String compName = cursor.getString(1);
+                int compFilter = cursor.getInt(2);
+
+                arrayList.add(new ComponentModel(compID, compName, compFilter));
+
+            } while (cursor.moveToNext());
+        } else {
+
+        }
+        return arrayList;
+    }
+    public ArrayList<FacilityModel> getFacilityListForCameraActivitySpinner() {
+        ArrayList<FacilityModel>arrayList=new ArrayList<>();
+
+        SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
         Cursor cursor = sqLiteDatabase.rawQuery("select * from Facility_TABLE", null);
         if (cursor.moveToFirst()) {
             do {
@@ -81,7 +130,9 @@ public class SQLiteModel extends SQLiteOpenHelper {
                 String facName = cursor.getString(1);
                 int facFilter = cursor.getInt(2);
 
-                arrayList.add(new FacilityModel(facID, facName,facFilter));
+
+                    arrayList.add(new FacilityModel(facID, facName,facFilter));
+
             } while (cursor.moveToNext());
         } else {
 
@@ -93,49 +144,45 @@ public class SQLiteModel extends SQLiteOpenHelper {
         ArrayList<String>arrayList=new ArrayList<>();
 
         SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
-        Cursor cursor = sqLiteDatabase.rawQuery("select * from Facility_TABLE", null);
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from Facility_TABLE ORDER BY Fac_Name", null);
         if (cursor.moveToFirst()) {
             do {
-                if(cursor.isFirst())
+                int facId=cursor.getInt(0);
+                String facName = cursor.getString(1);
+                if(facId==100)
                 {
-
                 }else
                 {
-                    String facName = cursor.getString(1);
                     arrayList.add(facName);
                 }
-
-
             } while (cursor.moveToNext());
         } else {
 
         }
         return arrayList;
-
     }
 
     public ArrayList<String> getComponentNames() {
         ArrayList<String>arrayList=new ArrayList<>();
 
         SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
-        Cursor cursor = sqLiteDatabase.rawQuery("select * from Component_TABLE", null);
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from Component_TABLE ORDER BY Comp_Name", null);
         if (cursor.moveToFirst()) {
             do {
-               if(cursor.isFirst())
-               {
-
-               }else
-               {
+                  int compId=cursor.getInt(0);
                    String compName = cursor.getString(1);
-                   arrayList.add(compName);
-               }
+                  if(compId==200)
+                  {
+                  }else
+                  {
+                      arrayList.add(compName);
+                  }
             } while (cursor.moveToNext());
         } else {
 
         }
         return arrayList;
     }
-
 
     public String getComponentName(int compID) {
 

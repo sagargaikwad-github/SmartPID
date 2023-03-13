@@ -1,14 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.SmartPID" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.SmartPID" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/primary_color</item>
+
         <item name="colorPrimaryVariant">@color/primary_light_color</item>
         <item name="colorOnPrimary">@color/dark_color</item>
 
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
 
         <item name="colorSecondary">@color/primary_color</item>
+
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
         <!-- Customize your theme here. -->
+
+    </style>
+
+
+    <style name="CustomCheckbox1" parent="@style/Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="android:button">@drawable/checkbox_selector</item>
+        <item name="android:background">@android:color/transparent</item>
     </style>
 </resources>

@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SmartPID</string>
+
+    <dimen name="filter_text_size">15sp</dimen>
+    <dimen name="filter_title_text_size">17sp</dimen>
+
+
 </resources>

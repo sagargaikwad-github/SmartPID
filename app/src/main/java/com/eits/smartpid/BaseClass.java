@@ -6,16 +6,26 @@ import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
@@ -38,12 +48,15 @@ public class BaseClass extends AppCompatActivity {
     final int STATE_BLUETOOTH_OFF = 4;
     final int STATE_MESSAGE_RECIEVED = 5;
 
-    String BluetoothText="0";
+    String BluetoothText="ppm";
 
     @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+
+       // AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
         bluetoothAdapter=BluetoothAdapter.getDefaultAdapter();
 
@@ -53,7 +66,16 @@ public class BaseClass extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+//        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+//        WindowInsetsControllerCompat windowInsetsController = ViewCompat.getWindowInsetsController(getWindow().getDecorView());
+//        if (windowInsetsController == null) {
+//            return;
+//        }
+//        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+
     }
+
     Handler handler = new Handler(Looper.getMainLooper()) {
         @SuppressLint("MissingPermission")
         @Override

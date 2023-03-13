@@ -15,7 +15,7 @@
     <color name="text_white">#FFFFFF</color>
     <color name="text_black">#000000</color>
 
-    <color name="file_bg_color">#C5F1C9</color>
+    <color name="green_light_color">#C5F1C9</color>
 
     <color name="text_yellow">#FFEB3B</color>
 </resources>
